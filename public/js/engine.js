@@ -275,7 +275,13 @@ export function endRun(reason) {
     track('daily_end', { score: S.score, acc, streak: S.meter.dayStreak });
   } else track('game_end', { game: S.game, score: S.score, acc, solved: S.solved, reason, pro: S.pro });
 
-  if (runSink) { try { runSink({ reason, acc, durationMs }); } catch (e) { /* never block the results screen */ } }
+  // Never block or break the results screen over an upload.
+  if (runSink) {
+    try {
+      const p = runSink({ reason, acc, durationMs });
+      if (p && typeof p.catch === 'function') p.catch(() => { });
+    } catch (e) { /* ignore */ }
+  }
 
   renderResults({ reason, acc, avg, perMin, isBest });
   setScreen('results');

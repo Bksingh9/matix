@@ -6,8 +6,9 @@ import { audio } from './audio.js';
 import { setScreen, renderMenu, syncSound, updAnswer } from './ui.js';
 import {
   gateGame, startRun, endRun, submitPad, submitTF, submitOp,
-  chipTap, digit, loop, share
+  chipTap, digit, loop, share, setAttemptSink, setRunSink
 } from './engine.js';
+import { recordAttempt, submitRun, flush, initRunLog } from './runlog.js';
 import { openPaywall, closePaywall, openReward, closeReward, startCheckout, watchReward, devPreviewPro, tryLicence, resumeAfterCheckout } from './paywall.js';
 import { initAuth, openAuthSheet, closeAuthSheet, submitAuthSheet, signOut, onAuthChange } from './auth.js';
 import { refreshEntitlement, migrateLocalProgress } from './entitlement.js';
@@ -176,6 +177,13 @@ async function init() {
   window.__mindsharp.S = S;
 
   bind();
+
+  // The engine reports attempts and finished runs through these sinks, so it
+  // never imports the network layer.
+  setAttemptSink(recordAttempt);
+  setRunSink(submitRun);
+  initRunLog();
+
   S.stats = DEF_STATS();
   S.meter = DEF_METER();
   renderMenu();
@@ -189,13 +197,13 @@ async function init() {
   // as free — which is the correct failure mode when it never answers at all.
   onAuthChange(async sess => {
     await refreshEntitlement({ force: true });
-    if (sess) await migrateLocalProgress();
+    if (sess) { await migrateLocalProgress(); flush(); }
     renderMenu();
   });
 
   await initAuth();
   await refreshEntitlement({ force: true });
-  if (S.authed) await migrateLocalProgress();
+  if (S.authed) { await migrateLocalProgress(); flush(); }
   renderMenu();
 
   track('app_open', { pro: S.pro, authed: S.authed, runsLeft: S.pro ? 'inf' : runsLeft() });

@@ -32,6 +32,34 @@ export async function fakeSupabase(seed = {}) {
       return send(res, 200, user);
     }
 
+    // RPC: the two SECURITY DEFINER helpers, emulated well enough that the
+    // handlers exercise their real code paths.
+    const rpc = url.pathname.match(/^\/rest\/v1\/rpc\/(\w+)$/);
+    if (rpc) {
+      const fn = rpc[1];
+      if (fn === 'bump_rate_limit') {
+        const b = body || {};
+        const row = (tables.rate_limits ||= []).find(r => r.bucket === b.p_bucket);
+        if (!row) { tables.rate_limits.push({ bucket: b.p_bucket, count: 1, window_start: Date.now() }); return send(res, 200, true); }
+        row.count += 1;
+        return send(res, 200, row.count <= b.p_limit);
+      }
+      if (fn === 'insert_run_with_attempts') {
+        const b = body || {};
+        const runs = (tables.runs ||= []);
+        const isDaily = b.p_run?.is_daily === true;
+        if (isDaily && runs.some(r => r.user_id === b.p_user_id && r.daily_date === b.p_run.daily_date && r.is_daily)) {
+          return send(res, 409, { code: '23505', message: 'duplicate key value violates runs_one_daily_per_user_per_day' });
+        }
+        const id = runs.length + 1;
+        runs.push({ id, user_id: b.p_user_id, ...b.p_run });
+        const attempts = (tables.attempts ||= []);
+        for (const a of (b.p_attempts || [])) attempts.push({ id: attempts.length + 1, run_id: id, user_id: b.p_user_id, ...a });
+        return send(res, 200, id);
+      }
+      return send(res, 404, { message: `function ${fn} not found` });
+    }
+
     const m = url.pathname.match(/^\/rest\/v1\/([\w.]+)$/);
     if (!m) return send(res, 404, { message: 'not found' });
     const name = m[1];
