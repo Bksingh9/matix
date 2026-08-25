@@ -4,7 +4,8 @@ import { track } from './analytics.js';
 import { $ } from './util.js';
 import { renderMenu, renderRuns } from './ui.js';
 import { isAuthed, openAuthSheet } from './auth.js';
-import { validateLicence } from './entitlement.js';
+import { validateLicence, pollForPro } from './entitlement.js';
+import { post } from './api.js';
 
 /* Paywall + run-limit sheets. Imports ui.js but never engine.js, so the
    module graph stays acyclic. */
@@ -28,14 +29,69 @@ export const closeReward = () => $('#rewardm').classList.remove('show');
 export const pwNote = (html, err) => { $('#pw-msg').innerHTML = '<div class="notice' + (err ? ' err' : '') + '">' + html + '</div>'; };
 export const rwNote = (html, err) => { $('#rw-msg').innerHTML = '<div class="notice' + (err ? ' err' : '') + '">' + html + '</div>'; };
 
-/* Checkout is wired to POST /api/checkout in Phase 2 so that
-   custom_data.user_id is always attached server-side. */
-export function startCheckout(plan) {
+/* Checkout goes through POST /api/checkout so custom_data.user_id is always
+   attached server-side. Without it a payment arrives with nobody to give it
+   to — which is a refund and a support ticket, not a sale. */
+export async function startCheckout(plan) {
   track('plan_click', { plan, price: CONFIG.prices[plan] });
-  const url = CONFIG.checkout[plan];
-  if (!url) { pwNote('No checkout link yet. Paste your buy URL into <b>CONFIG.checkout.' + plan + '</b> and this button goes live.'); return; }
-  track('checkout_open', { plan });
-  window.open(url, '_blank', 'noopener');
+
+  if (!isAuthed() && !S.authed) {
+    pwNote('Sign in first — a purchase has to attach to an account, or it can’t follow you to another device.');
+    openAuthSheet('checkout', 'Sign in to buy. Your subscription lives on the account, not in this browser.');
+    return;
+  }
+
+  const btn = document.querySelector(`#plans .plan[data-plan="${plan}"] .pp`);
+  const original = btn ? btn.textContent : null;
+  if (btn) btn.textContent = '…';
+
+  try {
+    const r = await post('/api/checkout', { plan });
+    if (!r || !r.url) throw new Error('no_url');
+    track('checkout_open', { plan });
+    // Same tab. A popup gets blocked on iOS and the buyer never sees it.
+    location.href = r.url;
+  } catch (e) {
+    const code = e && e.code;
+    if (code === 'auth_required') {
+      pwNote('Your session expired. Sign in again and the purchase will attach correctly.');
+      openAuthSheet('checkout_expired');
+    } else if (code === 'checkout_unavailable' || code === 'plan_unavailable') {
+      pwNote('That plan isn’t on sale yet. Set <b>LS_VARIANT_' + plan.toUpperCase() + '</b> in the environment and it goes live.');
+    } else if (code === 'rate_limited') {
+      pwNote('Too many attempts in a row. Wait a minute and try again.', true);
+    } else {
+      pwNote('Couldn’t open checkout just now. Try again in a moment — nothing has been charged.', true);
+    }
+  } finally {
+    if (btn && original !== null) btn.textContent = original;
+  }
+}
+
+/* Returning from a successful checkout. Webhooks are fast but not instant, so
+   poll /api/me rather than showing a buyer the free tier and letting them
+   conclude the payment failed. */
+export async function resumeAfterCheckout() {
+  const params = new URLSearchParams(location.search);
+  if (params.get('checkout') !== 'success') return;
+
+  history.replaceState(null, '', location.pathname);
+  openPaywall('Thanks — confirming your purchase with the payment provider…', 'checkout_return');
+  pwNote('This usually takes a few seconds.');
+
+  const ent = await pollForPro({
+    onTick: (i, left) => pwNote('Still confirming… (' + Math.ceil(left / 1000) + 's)')
+  });
+
+  if (ent.isPro) {
+    pwNote('You’re Pro. Everything is unlocked — enjoy.');
+    renderMenu();
+    setTimeout(closePaywall, 1800);
+  } else {
+    pwNote('Your payment went through, but we haven’t had confirmation yet. It normally lands within a minute — reload then. '
+      + 'If it still says free after that, email support with your receipt and we’ll fix it by hand.', true);
+    renderMenu();
+  }
 }
 
 /* Rewarded-ad hook. Replace the body with your network's call — for Google

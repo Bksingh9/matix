@@ -8,7 +8,7 @@ import {
   gateGame, startRun, endRun, submitPad, submitTF, submitOp,
   chipTap, digit, loop, share
 } from './engine.js';
-import { openPaywall, closePaywall, openReward, closeReward, startCheckout, watchReward, devPreviewPro, tryLicence } from './paywall.js';
+import { openPaywall, closePaywall, openReward, closeReward, startCheckout, watchReward, devPreviewPro, tryLicence, resumeAfterCheckout } from './paywall.js';
 import { initAuth, openAuthSheet, closeAuthSheet, submitAuthSheet, signOut, onAuthChange } from './auth.js';
 import { refreshEntitlement, migrateLocalProgress } from './entitlement.js';
 
@@ -202,6 +202,9 @@ async function init() {
   // Signals "startup finished, entitlement resolved" — used by the e2e suite
   // so tests never race the /api/me round-trip.
   window.__mindsharp.booted = true;
+
+  // Landed back from a checkout: poll until the webhook lands.
+  resumeAfterCheckout();
 }
 
 init();
