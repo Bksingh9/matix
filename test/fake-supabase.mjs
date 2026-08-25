@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { Readable } from 'node:stream';
 
 /* A minimal stand-in for Supabase's PostgREST endpoint.
  *
@@ -133,25 +134,18 @@ function readBody(req) {
 }
 
 /* Node's http req/res are what Vercel hands a function, so the handlers can be
-   driven directly with a tiny pair of fakes. */
+   driven directly with a tiny pair of fakes.
+ *
+ * A real Readable, not a hand-rolled emitter: a handler that awaits something
+ * else before reading its body (the licence route rate-limits first) would
+ * otherwise miss the data events entirely and hang forever. */
 export function mockReq({ method = 'POST', url = '/', headers = {}, body = null, raw = null } = {}) {
   const chunks = raw != null ? [Buffer.from(raw)] : (body != null ? [Buffer.from(JSON.stringify(body))] : []);
-  const listeners = {};
-  const req = {
-    method, url,
-    headers: Object.fromEntries(Object.entries(headers).map(([k, v]) => [k.toLowerCase(), v])),
-    socket: { remoteAddress: '203.0.113.10' },
-    on(evt, fn) { (listeners[evt] ||= []).push(fn); return req; },
-    destroy() { },
-    _flush() {
-      queueMicrotask(() => {
-        for (const c of chunks) (listeners.data || []).forEach(f => f(c));
-        (listeners.end || []).forEach(f => f());
-      });
-    }
-  };
-  // readRaw attaches its listeners synchronously, so emit on the next tick.
-  queueMicrotask(() => req._flush());
+  const req = Readable.from(chunks, { objectMode: false });
+  req.method = method;
+  req.url = url;
+  req.headers = Object.fromEntries(Object.entries(headers).map(([k, v]) => [k.toLowerCase(), v]));
+  req.socket = { remoteAddress: '203.0.113.10' };
   return req;
 }
 
