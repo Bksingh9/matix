@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<title>MindSharp — brain fitness, timed</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="/css/app.css" />
+</head>
+<body>
+<div class="app">
+
+  <!-- ==================== MENU ==================== -->
+  <section id="screen-menu" class="screen active">
+    <div class="topbar">
+      <div class="logo"><span class="wm">MIND<span class="sh">SHARP</span></span></div>
+      <div class="tb-right">
+        <span class="runs-pill" id="runs-pill"><b>5</b> runs left</span>
+        <button class="pro-btn" id="pro-cta">Get Pro</button>
+        <span class="pro-badge" id="pro-badge" style="display:none;">Pro</span>
+      </div>
+    </div>
+
+    <button class="daily" id="daily-card">
+      <div class="daily-top">
+        <span class="daily-tag">Daily challenge</span>
+        <span class="daily-date" id="daily-date">—</span>
+      </div>
+      <div class="daily-h" id="daily-h">Today's twelve</div>
+      <div class="daily-sub">The same twelve problems for every player, worldwide. One attempt. Share your grid.</div>
+      <div class="daily-cta">
+        <span class="go" id="daily-go">Play today</span>
+        <span class="streakinfo" id="daily-streak">Day streak: 0</span>
+      </div>
+    </button>
+
+    <div class="sec-head"><span class="label">Training games</span><span class="more" id="menu-diff-hint">Medium</span></div>
+    <div class="grid" id="game-grid"></div>
+
+    <div class="strip">
+      <div class="cell"><span class="v" id="s-best">0</span><span class="k">Top score</span></div>
+      <div class="cell"><span class="v" id="s-solved">0</span><span class="k">Solved</span></div>
+      <div class="cell"><span class="v" id="s-streak">0</span><span class="k">Best streak</span></div>
+      <div class="cell"><span class="v" id="s-days">0</span><span class="k">Days</span></div>
+    </div>
+
+    <details class="settings">
+      <summary><span>Settings</span><span>▾</span></summary>
+      <div class="setbody">
+        <div class="setrow">
+          <span class="label">Operations</span>
+          <div class="chips" id="ops">
+            <button class="op-chip on" data-op="+">+</button>
+            <button class="op-chip on" data-op="-">&minus;</button>
+            <button class="op-chip on" data-op="*">&times;</button>
+            <button class="op-chip on" data-op="/">&divide;</button>
+          </div>
+        </div>
+        <div class="setrow">
+          <span class="label">Difficulty</span>
+          <div class="seg" id="diff">
+            <button data-diff="easy">Easy</button>
+            <button data-diff="medium" class="on">Medium</button>
+            <button data-diff="hard">Hard</button>
+            <button data-diff="expert" data-pro="1">Expert</button>
+          </div>
+        </div>
+        <div class="toggles">
+          <button class="toggle on" id="toggle-auto"><span class="tn">Auto-submit</span><span class="switch"></span></button>
+          <button class="toggle on" id="toggle-sound"><span class="tn">Sound</span><span class="switch"></span></button>
+        </div>
+        <button class="linkish" id="reset-btn" style="align-self:flex-start;">Reset all progress</button>
+      </div>
+    </details>
+
+    <div id="ad-slot"><div class="ad-box" id="ad-box">Ad slot · free plan</div></div>
+  </section>
+
+  <!-- ==================== GAME ==================== -->
+  <section id="screen-game" class="screen">
+    <button class="g-corner" id="quit-btn" aria-label="Quit">✕</button>
+    <button class="g-corner" id="sound-btn" aria-label="Sound">🔊</button>
+    <div class="g-head">
+      <div class="g-metric"><span class="k">Score</span><span id="score-wrap"><span id="g-score">0</span></span></div>
+      <div class="g-metric center"><span class="k" id="center-label">Time</span><span id="center-value">1:00</span></div>
+      <div class="g-metric right"><span class="k">Streak</span><span class="streak-line"><span id="streak-flame">🔥</span><span id="streak-val">0</span><span id="streak-mult">×2</span></span></div>
+    </div>
+    <div class="timerbar-wrap"><div id="timerbar"></div></div>
+    <div class="card" id="card">
+      <div id="subprompt"></div>
+      <div id="prompt">7 <span class="op">×</span> 8</div>
+      <div id="answerline"><span class="eq">=</span><span class="caret"></span></div>
+    </div>
+
+    <div class="panel" id="panel-pad">
+      <button class="key" data-key="1">1</button><button class="key" data-key="2">2</button><button class="key" data-key="3">3</button>
+      <button class="key" data-key="4">4</button><button class="key" data-key="5">5</button><button class="key" data-key="6">6</button>
+      <button class="key" data-key="7">7</button><button class="key" data-key="8">8</button><button class="key" data-key="9">9</button>
+      <button class="key back" data-key="back" aria-label="Delete">⌫</button><button class="key" data-key="0">0</button><button class="key enter" data-key="enter" aria-label="Submit">✓</button>
+    </div>
+    <div class="panel" id="panel-tf">
+      <button class="bigkey no" data-tf="0">✕<span class="hint">False</span></button>
+      <button class="bigkey yes" data-tf="1">✓<span class="hint">True</span></button>
+    </div>
+    <div class="panel" id="panel-ops">
+      <button class="opkey" data-op="+">+</button><button class="opkey" data-op="-">&minus;</button>
+      <button class="opkey" data-op="*">&times;</button><button class="opkey" data-op="/">&divide;</button>
+    </div>
+    <div class="panel" id="panel-chips"></div>
+    <button id="zen-end">End session</button>
+  </section>
+
+  <!-- ==================== RESULTS ==================== -->
+  <section id="screen-results" class="screen">
+    <div class="r-eyebrow" id="r-eyebrow">Blitz · Medium</div>
+    <h2 id="r-heading">Time's up</h2>
+    <div id="r-score">0</div>
+    <div class="r-scorelabel">Final score</div>
+    <span id="r-newbest">New best</span>
+    <div id="r-grid"></div>
+    <div id="r-stats"></div>
+    <div class="r-locked" id="r-locked"></div>
+    <div class="r-trend"><span class="rk">Recent scores · this game</span><div id="r-spark"></div></div>
+    <div class="r-actions">
+      <button class="btn-primary" id="r-again">Play again</button>
+      <div class="btn-row">
+        <button class="btn-ghost" id="r-share">Share result</button>
+        <button class="btn-ghost" id="r-menu">Menu</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ==================== PAYWALL ==================== -->
+<div class="modal" id="paywall">
+  <div class="sheet">
+    <button class="sheet-x" id="pw-x" aria-label="Close">✕</button>
+    <h3>MindSharp Pro</h3>
+    <div class="sub" id="pw-reason">Unlimited runs, every game, and a report on what's actually slowing you down.</div>
+    <div class="perks">
+      <div class="perk"><span class="tick">◆</span><span>Unlimited runs — no daily cap</span></div>
+      <div class="perk"><span class="tick">◆</span><span>Target, Recall and Expert difficulty unlocked</span></div>
+      <div class="perk"><span class="tick">◆</span><span>Weak-spot report: accuracy and speed per operation</span></div>
+      <div class="perk"><span class="tick">◆</span><span>Drills built from your own misses</span></div>
+      <div class="perk"><span class="tick">◆</span><span>No ads, ever</span></div>
+    </div>
+    <div class="plans" id="plans">
+      <button class="plan" data-plan="monthly"><span class="pl-l"><span class="pn">Monthly</span><span class="pd">Cancel anytime</span></span><span class="pp" id="pp-m">$4.99</span></button>
+      <button class="plan best" data-plan="yearly"><span class="tagbest">Save 50%</span><span class="pl-l"><span class="pn">Yearly</span><span class="pd">$2.50 / month, billed once</span></span><span class="pp" id="pp-y">$29.99</span></button>
+      <button class="plan" data-plan="lifetime"><span class="pl-l"><span class="pn">Lifetime</span><span class="pd">One payment, keep it forever</span></span><span class="pp" id="pp-l">$69</span></button>
+    </div>
+    <div id="pw-msg"></div>
+    <div class="sheet-foot">
+      <span class="label">Already bought? Enter your licence key</span>
+      <div class="keyrow">
+        <input id="lic-input" placeholder="MS-XXXX-XXXX" autocomplete="off" spellcheck="false" />
+        <button id="lic-btn">Unlock</button>
+      </div>
+      <button class="linkish" id="pw-demo">Preview Pro in this browser (demo)</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== RUN LIMIT / REWARD ==================== -->
+<div class="modal" id="rewardm">
+  <div class="sheet">
+    <button class="sheet-x" id="rw-x" aria-label="Close">✕</button>
+    <h3>Out of runs</h3>
+    <div class="sub">You've used today's free runs. Watch a short ad for two more, or go unlimited with Pro. The daily challenge is always free.</div>
+    <div id="rw-msg"></div>
+    <div class="r-actions" style="margin-top:2px;">
+      <button class="btn-primary" id="rw-watch">Watch ad · +2 runs</button>
+      <button class="btn-ghost" id="rw-pro">See Pro</button>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="/js/main.js"></script>
+</body>
+</html>

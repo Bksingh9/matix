@@ -1,0 +1,25 @@
+{
+  "name": "mindsharp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "MindSharp — mental-arithmetic fitness tracker. Vanilla JS frontend + Vercel serverless functions + Supabase.",
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "dev": "vercel dev",
+    "test": "node --test test/",
+    "check:secrets": "node scripts/check-secrets.mjs",
+    "check:prod": "node scripts/check-prod.mjs",
+    "check:syntax": "node scripts/check-syntax.mjs",
+    "check": "npm run check:syntax && npm run check:secrets && npm run test",
+    "e2e": "node --test test/e2e/",
+    "verify": "npm run check && npm run e2e",
+    "build": "npm run check:secrets && npm run check:prod"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0"
+  },
+  "devDependencies": {
+    "playwright": "^1.47.0"
+  }
+}

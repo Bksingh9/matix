@@ -1,0 +1,128 @@
+import { S } from './state.js';
+import { OPSYM, mulberry32 } from './util.js';
+
+/* ============================================================ CATALOGUE */
+export const GAMES = {
+  blitz:    { name: 'Blitz',    glyph: '⚡', pro: false, desc: 'Solve as many as you can before the clock dies.', input: 'pad',   timer: 'run',     duration: 60 },
+  survival: { name: 'Survival', glyph: '♥', pro: false, desc: 'Three lives. Every answer buys you less time.',   input: 'pad',   timer: 'problem', lives: 3 },
+  verify:   { name: 'Verify',   glyph: '⚖', pro: false, desc: 'True or false, fast. Trust your instinct.',       input: 'tf',    timer: 'run',     duration: 45 },
+  operator: { name: 'Operator', glyph: '⁂', pro: false, desc: 'The numbers are given. Find the missing sign.',   input: 'ops',   timer: 'run',     duration: 60 },
+  target:   { name: 'Target',   glyph: '◎', pro: true,  desc: 'Combine numbers to hit the target exactly.',      input: 'chips', timer: 'run',     duration: 90 },
+  recall:   { name: 'Recall',   glyph: '◈', pro: true,  desc: 'A number flashes. Type it back from memory.',     input: 'pad',   timer: 'problem', lives: 3 },
+  zen:      { name: 'Zen',      glyph: '∞', pro: false, desc: 'No clock, no lives. Just repetitions.',           input: 'pad',   timer: 'none' },
+  // hidden until Phase 5 lands the drill client — a visible card that leads
+  // nowhere is worse than no card.
+  drill:    { name: 'Drill',    glyph: '◇', pro: true,  desc: 'Twenty problems aimed at your weakest buckets.',  input: 'pad',   timer: 'problem', lives: 99, hidden: true },
+  daily:    { name: 'Daily',    glyph: '★', pro: false, desc: "Today's twelve.", input: 'pad', timer: 'none', hidden: true, total: 12 }
+};
+
+/* ============================================================ RNG
+   Swapped to a seeded generator for the daily challenge so every player
+   worldwide gets the same twelve problems. */
+let RND = Math.random;
+export const rnd = () => RND();
+export const useSystemRandom = () => { RND = Math.random; };
+export function seedFromDate(dateStr) {
+  let seed = 0;
+  for (let i = 0; i < dateStr.length; i++) seed = (seed * 31 + dateStr.charCodeAt(i)) | 0;
+  RND = mulberry32(seed);
+}
+
+export const ri = (a, b) => Math.floor(RND() * (b - a + 1)) + a;
+export const pick = a => a[Math.floor(RND() * a.length)];
+
+/* ============================================================ GENERATORS */
+export function bands(d) {
+  return ({
+    easy:   { add: [1, 20],    sub: [5, 30],     mA: [2, 9],   mB: [2, 9],   dB: [2, 9],   dQ: [2, 9] },
+    medium: { add: [10, 99],   sub: [20, 140],   mA: [2, 12],  mB: [2, 12],  dB: [2, 12],  dQ: [2, 12] },
+    hard:   { add: [25, 300],  sub: [60, 600],   mA: [11, 29], mB: [3, 19],  dB: [3, 19],  dQ: [3, 19] },
+    expert: { add: [120, 999], sub: [200, 1500], mA: [13, 49], mB: [7, 29],  dB: [7, 29],  dQ: [7, 29] }
+  })[d] || { add: [10, 99], sub: [20, 140], mA: [2, 12], mB: [2, 12], dB: [2, 12], dQ: [2, 12] };
+}
+
+export function diff() {
+  if (S.isDaily) return 'medium';
+  if (S.game === 'survival' || S.game === 'recall') {
+    const l = Math.floor(S.correct / 3) + 1;
+    return l <= 2 ? 'easy' : l <= 4 ? 'medium' : (S.pro && l >= 7 ? 'expert' : 'hard');
+  }
+  return S.difficulty;
+}
+
+export function arith(d) {
+  const b = bands(d);
+  const ops = S.isDaily ? ['+', '-', '*', '/'] : (S.ops.length ? S.ops : ['+', '-', '*', '/']);
+  const op = pick(ops);
+  let a, x, ans;
+  if (op === '+') { a = ri(b.add[0], b.add[1]); x = ri(b.add[0], b.add[1]); ans = a + x; }
+  else if (op === '-') { a = ri(b.sub[0], b.sub[1]); x = ri(1, a); ans = a - x; }
+  else if (op === '*') { a = ri(b.mA[0], b.mA[1]); x = ri(b.mB[0], b.mB[1]); ans = a * x; }
+  else { x = ri(b.dB[0], b.dB[1]); const q = ri(b.dQ[0], b.dQ[1]); a = x * q; ans = q; }
+  return { a, b: x, op, ans };
+}
+
+export function genPad() {
+  const p = arith(diff());
+  return { kind: 'pad', op: p.op, a: p.a, b: p.b, answer: p.ans, html: p.a + '<span class="op">' + OPSYM[p.op] + '</span>' + p.b, sub: '' };
+}
+
+export function genVerify() {
+  const p = arith(diff()), tru = RND() < .5;
+  let shown = p.ans;
+  if (!tru) {
+    const d = pick([1, 2, 3, 5, 9, 10]);
+    shown = p.ans + (RND() < .5 ? -d : d);
+    if (shown === p.ans || shown < 0) shown = p.ans + d;
+  }
+  return {
+    kind: 'tf', op: p.op, a: p.a, b: p.b, answer: tru ? 1 : 0, realAnswer: p.ans, small: true, sub: 'True or false',
+    html: p.a + '<span class="op">' + OPSYM[p.op] + '</span>' + p.b + '<span class="op">=</span>' + shown
+  };
+}
+
+export function genOperator() {
+  const p = arith(diff());
+  return {
+    kind: 'ops', op: p.op, a: p.a, b: p.b, answer: p.op, realAnswer: p.ans, small: true, sub: 'Find the sign',
+    html: p.a + '<span class="op">?</span>' + p.b + '<span class="op">=</span>' + p.ans
+  };
+}
+
+export function genTarget() {
+  const d = diff();
+  const n = (d === 'easy') ? 2 : (d === 'medium') ? 2 : 3;
+  const hi = (d === 'easy') ? 15 : (d === 'medium') ? 30 : 60;
+  const need = [];
+  for (let i = 0; i < n; i++) need.push(ri(2, hi));
+  const target = need.reduce((a, b) => a + b, 0);
+  const pool = need.slice();
+  while (pool.length < 6) pool.push(ri(2, hi));
+  for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(RND() * (i + 1)); const t = pool[i]; pool[i] = pool[j]; pool[j] = t; }
+  return { kind: 'chips', op: '+', answer: target, pool, sub: 'Pick numbers that total this', html: String(target) };
+}
+
+export function genRecall() {
+  const len = Math.min(9, 3 + Math.floor(S.correct / 3));
+  let s = String(ri(1, 9));
+  for (let i = 1; i < len; i++) s += String(ri(0, 9));
+  return { kind: 'recall', op: null, answer: parseInt(s, 10), digits: s, showMs: Math.max(700, 1500 - 60 * S.correct), sub: 'Memorise', html: s };
+}
+
+/* A drill problem comes from the server pre-generated, so pre/post
+   comparison is honest. The client only renders it. */
+export function fromDrill(p) {
+  return {
+    kind: 'pad', op: p.op, a: p.a, b: p.b, answer: p.answer, band: p.band, difficulty: p.difficulty,
+    html: p.a + '<span class="op">' + OPSYM[p.op] + '</span>' + p.b, sub: ''
+  };
+}
+
+export function generate() {
+  if (S.isDaily) { const r = RND(); return r < .6 ? genPad() : (r < .85 ? genVerify() : genOperator()); }
+  if (S.game === 'verify') return genVerify();
+  if (S.game === 'operator') return genOperator();
+  if (S.game === 'target') return genTarget();
+  if (S.game === 'recall') return genRecall();
+  return genPad();
+}
