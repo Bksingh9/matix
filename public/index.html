@@ -18,6 +18,7 @@
     <div class="topbar">
       <div class="logo"><span class="wm">MIND<span class="sh">SHARP</span></span></div>
       <div class="tb-right">
+        <span class="auth-strip" id="auth-strip"></span>
         <span class="runs-pill" id="runs-pill"><b>5</b> runs left</span>
         <button class="pro-btn" id="pro-cta">Get Pro</button>
         <span class="pro-badge" id="pro-badge" style="display:none;">Pro</span>
@@ -174,6 +175,26 @@
     <div class="r-actions" style="margin-top:2px;">
       <button class="btn-primary" id="rw-watch">Watch ad · +2 runs</button>
       <button class="btn-ghost" id="rw-pro">See Pro</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== SIGN IN ==================== -->
+<div class="modal" id="authm">
+  <div class="sheet">
+    <button class="sheet-x" id="auth-x" aria-label="Close">✕</button>
+    <h3>Sign in</h3>
+    <div class="sub" id="auth-reason">Sign in to keep your streak, sync across devices, and hold your Pro subscription to an account instead of a browser.</div>
+    <div id="auth-msg"></div>
+    <div class="setrow">
+      <span class="label">Email</span>
+      <div class="keyrow">
+        <input id="auth-email" type="email" inputmode="email" placeholder="you@example.com" autocomplete="email" spellcheck="false" />
+        <button id="auth-send">Send link</button>
+      </div>
+    </div>
+    <div class="lk-p" style="margin-top:14px;font-family:var(--mono);font-size:10px;line-height:1.6;color:var(--ink-dim);">
+      No password. We email you a one-time link. Your address is used to sign you in and to attach a purchase to your account — nothing else.
     </div>
   </div>
 </div>

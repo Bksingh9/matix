@@ -66,10 +66,60 @@ export async function launch() {
   return chromium.launch({ executablePath, args: ['--no-sandbox', '--disable-dev-shm-usage'] });
 }
 
-/* Opens the app, fails loudly on any console error or unhandled rejection —
-   an unbundled ES-module app fails silently otherwise. */
+export const FREE_ME = {
+  authed: false, user: null,
+  entitlement: { isPro: false, plan: 'free', status: 'none', currentPeriodEnd: null, cancelAtPeriodEnd: false },
+  limits: { freeRuns: 5, runsUsedToday: 0, runsLeft: 5 },
+  hasRuns: false, serverTime: new Date().toISOString()
+};
+
+export const proMe = (over = {}) => ({
+  ...FREE_ME,
+  authed: true,
+  user: { id: 'u-test-0001', email: 'player@example.com', displayName: null },
+  entitlement: { isPro: true, plan: 'yearly', status: 'active', currentPeriodEnd: '2099-01-01T00:00:00Z', cancelAtPeriodEnd: false },
+  limits: { freeRuns: 5, runsUsedToday: 0, runsLeft: null },
+  hasRuns: true,
+  ...over
+});
+
+/* Opens the app with a per-context /api/* stub, so entitlement can be driven
+   from the server side exactly as it is in production. Fails loudly on any
+   console error or unhandled rejection — an unbundled ES-module app fails
+   silently otherwise.
+
+   opts.api  map of pathname -> {status, body} | (request) => {status, body}
+   opts.pro  sugar for a Pro /api/me
+   opts.apiDown  every /api/* call fails at the network level */
 export async function openApp(browser, origin, opts = {}) {
   const ctx = await browser.newContext({ viewport: { width: 420, height: 900 } });
+
+  const routes = {
+    '/api/config': { status: 200, body: { supabaseUrl: null, supabaseAnonKey: null, authEnabled: false, checkoutEnabled: false, appUrl: null } },
+    '/api/me': { status: 200, body: opts.pro ? proMe() : FREE_ME },
+    ...(opts.api || {})
+  };
+
+  const calls = [];
+  await ctx.route('**/api/**', async route => {
+    const req = route.request();
+    const path = new URL(req.url()).pathname;
+    let payload = null;
+    try { payload = req.postData() ? JSON.parse(req.postData()) : null; } catch { payload = req.postData(); }
+    calls.push({ path, method: req.method(), body: payload });
+
+    if (opts.apiDown) return route.abort('connectionrefused');
+
+    let entry = routes[path];
+    if (typeof entry === 'function') entry = await entry({ path, method: req.method(), body: payload });
+    if (!entry) return route.fulfill({ status: 404, contentType: 'application/json', body: '{"error":"not_found"}' });
+    return route.fulfill({
+      status: entry.status || 200,
+      contentType: 'application/json',
+      body: JSON.stringify(entry.body ?? {})
+    });
+  });
+
   const page = await ctx.newPage();
   const errors = [];
   // Only application errors. Sub-resource load failures are ignored: this
@@ -78,12 +128,10 @@ export async function openApp(browser, origin, opts = {}) {
   page.on('console', m => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) errors.push(m.text()); });
   page.on('pageerror', e => errors.push(String(e)));
   await page.goto(origin + '/', { waitUntil: 'networkidle' });
-  await page.waitForFunction(() => !!window.__mindsharp, null, { timeout: 5000 });
-  if (opts.pro) {
-    await page.evaluate(() => document.querySelector('#pw-demo').click());
-    await page.waitForFunction(() => document.querySelector('#pro-badge').style.display !== 'none');
-  }
-  return { page, ctx, errors };
+  await page.waitForFunction(() => !!window.__mindsharp && !!window.__mindsharp.S, null, { timeout: 8000 });
+  // Wait for the entitlement round-trip to land, so tests never race it.
+  await page.waitForFunction(() => window.__mindsharp.S.pro === true || window.__mindsharp.booted === true, null, { timeout: 8000 }).catch(() => {});
+  return { page, ctx, errors, calls };
 }
 
 /* The settings block is a collapsed <details>; open it before clicking in. */

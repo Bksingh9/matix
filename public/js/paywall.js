@@ -1,9 +1,10 @@
 import { S, saveMeter } from './state.js';
-import { K, sset } from './store.js';
 import { CONFIG } from './config.js';
 import { track } from './analytics.js';
 import { $ } from './util.js';
 import { renderMenu, renderRuns } from './ui.js';
+import { isAuthed, openAuthSheet } from './auth.js';
+import { validateLicence } from './entitlement.js';
 
 /* Paywall + run-limit sheets. Imports ui.js but never engine.js, so the
    module graph stays acyclic. */
@@ -69,41 +70,65 @@ export async function watchReward() {
 }
 
 /* ---- licence keys --------------------------------------------------------
-   Phase 3 replaces this with a call to /api/licence/validate, which proxies
-   the Lemon Squeezy licence check with the server-side API key and writes the
-   entitlement row. Until then this is the demo-key path from the original
-   single-file build. */
-export async function grantPro(licence, source) {
-  S.pro = true;
-  S.licence = licence || null;
-  await sset(K.ent, { pro: true, licence: S.licence, since: Date.now() });
-  track('pro_active', { source: source || 'unknown' });
-  closePaywall(); closeReward(); renderMenu();
-}
-
+   The key goes to /api/licence/validate, which checks it against Lemon Squeezy
+   with the server-side API key and writes the entitlement row. The client then
+   re-asks /api/me. Nothing here decides anything. */
 export async function tryLicence() {
   const key = $('#lic-input').value.trim().toUpperCase();
   if (!key) { pwNote('Enter the key from your purchase email.', true); return; }
-  if (CONFIG.licenceApi) {
-    try {
-      const r = await fetch(CONFIG.licenceApi, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key }) });
-      const d = await r.json();
-      if (d && d.valid) { track('licence_ok', {}); grantPro(key, 'licence'); return; }
+
+  if (!isAuthed()) {
+    pwNote('Sign in first, then enter your key — that’s what binds the licence to an account instead of this browser.', true);
+    openAuthSheet('licence', 'Sign in to attach your licence key to an account. Without one, the key can’t follow you to another device.');
+    return;
+  }
+
+  const btn = $('#lic-btn');
+  const original = btn.textContent;
+  btn.textContent = '…';
+  btn.disabled = true;
+  try {
+    const r = await validateLicence(key);
+    if (r && r.valid) {
+      track('licence_ok', { plan: r.plan });
+      closePaywall(); closeReward(); renderMenu();
+      return;
+    }
+    track('licence_fail', { reason: 'rejected' });
+    pwNote("That key didn't validate. Check your purchase email, or contact support.", true);
+  } catch (e) {
+    const code = e && e.code;
+    if (code === 'key_in_use') {
+      track('licence_fail', { reason: 'key_in_use' });
+      pwNote('That key is already attached to a different account. If that account is yours, sign in with it; otherwise contact support.', true);
+    } else if (code === 'rate_limited') {
+      track('licence_fail', { reason: 'rate_limited' });
+      pwNote('Too many attempts. Wait ten minutes and try again.', true);
+    } else if (code === 'auth_required') {
+      track('licence_fail', { reason: 'auth_required' });
+      pwNote('Your session expired. Sign in again, then re-enter the key.', true);
+    } else if (code === 'invalid_key') {
       track('licence_fail', { reason: 'rejected' });
       pwNote("That key didn't validate. Check your purchase email, or contact support.", true);
-    } catch (e) {
+    } else {
       track('licence_fail', { reason: 'network' });
       pwNote("Couldn't reach the licence server. Try again in a moment.", true);
     }
-    return;
+  } finally {
+    btn.textContent = original;
+    btn.disabled = false;
   }
-  if (/^MS-[A-Z0-9]{4}-[A-Z0-9]{4}$/.test(key)) { track('licence_ok', { mode: 'demo' }); grantPro(key, 'licence_demo'); }
-  else { track('licence_fail', { mode: 'demo' }); pwNote('Demo mode accepts keys shaped like <b>MS-4KQ2-A19Z</b>. Set <b>CONFIG.licenceApi</b> for real validation.', true); }
 }
 
-/* Dev-only local Pro unlock. Gated behind CONFIG.devMode and stripped from
-   production by `npm run check:prod`. Never grants server entitlement. */
+/* Dev-only Pro preview.
+
+   This does NOT set S.pro. It cannot: entitlement comes from the server. What
+   it does is tell you how to grant yourself a real comp entitlement, which is
+   the only way Pro turns on now. Gated behind CONFIG.devMode and blocked from
+   production by `npm run check:prod`. */
 export function devPreviewPro() {
   if (!CONFIG.devMode) return;
-  grantPro(null, 'demo_preview');
+  pwNote('Pro is decided by the server now, so no button can switch it on. To unlock a dev account, run:'
+    + '<br><br><code style="color:var(--ink);word-break:break-all;">update entitlements set plan=\'comp\', status=\'active\' where user_id=\'&lt;your uuid&gt;\';</code>'
+    + '<br><br>or run <b>sql/004_seed_dev.sql</b>, which also seeds a lopsided answer history for testing drills.');
 }

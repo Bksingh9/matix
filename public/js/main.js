@@ -9,6 +9,8 @@ import {
   chipTap, digit, loop, share
 } from './engine.js';
 import { openPaywall, closePaywall, openReward, closeReward, startCheckout, watchReward, devPreviewPro, tryLicence } from './paywall.js';
+import { initAuth, openAuthSheet, closeAuthSheet, submitAuthSheet, signOut, onAuthChange } from './auth.js';
+import { refreshEntitlement, migrateLocalProgress } from './entitlement.js';
 
 /* ============================================================ BINDINGS
    All DOM wiring lives here. Dynamic content (game cards, the results CTA)
@@ -27,6 +29,16 @@ function bind() {
     const id = c.dataset.game;
     if (gateGame(id)) startRun(id, false);
   });
+
+  // auth strip — delegated, because renderMenu replaces its contents
+  $('#auth-strip').addEventListener('click', e => {
+    if (e.target.closest('#auth-in')) openAuthSheet('topbar');
+    else if (e.target.closest('#auth-out')) signOut();
+  });
+  $('#auth-x').addEventListener('click', closeAuthSheet);
+  $('#authm').addEventListener('click', e => { if (e.target.id === 'authm') closeAuthSheet(); });
+  $('#auth-send').addEventListener('click', submitAuthSheet);
+  $('#auth-email').addEventListener('keydown', e => { if (e.key === 'Enter') submitAuthSheet(); });
 
   $$('#ops .op-chip').forEach(c => c.addEventListener('click', () => {
     const op = c.dataset.op, i = S.ops.indexOf(op);
@@ -125,8 +137,8 @@ function bind() {
 }
 
 function onKey(e) {
-  if ($('#paywall').classList.contains('show') || $('#rewardm').classList.contains('show')) {
-    if (e.key === 'Escape') { closePaywall(); closeReward(); }
+  if ($('#paywall').classList.contains('show') || $('#rewardm').classList.contains('show') || $('#authm').classList.contains('show')) {
+    if (e.key === 'Escape') { closePaywall(); closeReward(); closeAuthSheet(); }
     return;
   }
   if (S.screen === 'game') {
@@ -173,7 +185,23 @@ async function init() {
   renderMenu();
   syncSound();
 
-  track('app_open', { pro: S.pro, runsLeft: S.pro ? 'inf' : runsLeft() });
+  // Entitlement is server-decided. Until /api/me answers, the client behaves
+  // as free — which is the correct failure mode when it never answers at all.
+  onAuthChange(async sess => {
+    await refreshEntitlement({ force: true });
+    if (sess) await migrateLocalProgress();
+    renderMenu();
+  });
+
+  await initAuth();
+  await refreshEntitlement({ force: true });
+  if (S.authed) await migrateLocalProgress();
+  renderMenu();
+
+  track('app_open', { pro: S.pro, authed: S.authed, runsLeft: S.pro ? 'inf' : runsLeft() });
+  // Signals "startup finished, entitlement resolved" — used by the e2e suite
+  // so tests never race the /api/me round-trip.
+  window.__mindsharp.booted = true;
 }
 
 init();

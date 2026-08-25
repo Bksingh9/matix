@@ -49,10 +49,10 @@ export async function loadAll() {
     if (typeof pr.sound === 'boolean') S.sound = pr.sound;
   }
 
-  // Local Pro flag. Phase 1 deletes this read: entitlement becomes
-  // server-decided and a local key must never grant Pro.
-  const en = await sget(K.ent);
-  if (en && en.pro) { S.pro = true; S.licence = en.licence || null; }
+  // Deliberately absent: there is no local read that can set S.pro.
+  // Entitlement is resolved by entitlement.js from /api/me and applied
+  // through setPro(). Clearing storage cannot take Pro away, and editing
+  // storage cannot grant it.
 
   const m = Object.assign(DEF_METER(), (await sget(K.meter)) || {});
   if (m.date !== today()) {
