@@ -184,23 +184,23 @@ export function renderResults(r) {
 }
 
 /* The locked/unlocked weak-spot card.
-   Pro branch reads the local lifetime per-operation tallies; Phase 5 replaces
-   this with the real bucket report from /api/weakspots. */
+
+   The Pro branch renders a frame that drills.js fills asynchronously from
+   /api/weakspots. A drill run replaces the whole card with its before/after
+   comparison instead. */
 export function renderWeakBox(r) {
   const box = $('#r-locked');
   if (S.pro) {
-    const o = S.stats.ops;
-    const lines = Object.keys(o).filter(k => o[k][1] > 0).map(k => {
-      const pct = Math.round(100 * o[k][0] / o[k][1]);
-      return '<div class="oprow"><span style="color:var(--amber)">' + OPSYM[k] + '</span>'
-        + '<span style="color:' + (pct < 80 ? 'var(--coral)' : 'var(--ink-dim)') + '">' + pct + '% · ' + o[k][1] + ' seen</span></div>';
-    }).join('');
     box.innerHTML = '<div class="lk-h">Weak-spot report <span class="tag">Pro</span></div>'
-      + (lines || '<div class="lk-p">Play a few rounds to build your profile.</div>')
-      + '<div class="lk-p" style="margin-top:8px;">Lifetime accuracy per operation. The red ones are your drill list.</div>';
+      + '<div id="weak-body"><div class="lk-p">Reading your last 400 answers…</div></div>';
   } else {
+    // Describes what now exists, rather than what was once promised.
     box.innerHTML = '<div class="lk-h">Weak-spot report <span class="tag">Pro</span></div>'
-      + '<div class="lk-p">See which operations and number ranges cost you time, and get a drill built from your own misses.</div>'
+      + '<div class="lk-p">Pro scores each operation and number range you play — accuracy, pace against a target time, '
+      + 'and whether you are getting better or worse — then builds a twenty-problem drill from the buckets you actually miss, '
+      + 'and shows you the before/after when you finish it.</div>'
+      + '<div class="lk-p" style="margin-top:6px;opacity:.75;">Needs about forty answers before it will say anything. '
+      + 'It won\'t guess from a handful.</div>'
       + '<button class="lk-cta" id="r-locked-cta" data-acc="' + (r && typeof r.acc === 'number' ? r.acc : 0) + '">Unlock with Pro →</button>';
   }
 }

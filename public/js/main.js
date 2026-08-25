@@ -6,9 +6,10 @@ import { audio } from './audio.js';
 import { setScreen, renderMenu, syncSound, updAnswer } from './ui.js';
 import {
   gateGame, startRun, endRun, submitPad, submitTF, submitOp,
-  chipTap, digit, loop, share, setAttemptSink, setRunSink
+  chipTap, digit, loop, share, setAttemptSink, setRunSink, setResultsHook
 } from './engine.js';
 import { recordAttempt, submitRun, flush, initRunLog } from './runlog.js';
+import { initDrills, startDrill, onResults } from './drills.js';
 import { openPaywall, closePaywall, openReward, closeReward, startCheckout, watchReward, devPreviewPro, tryLicence, resumeAfterCheckout } from './paywall.js';
 import { initAuth, openAuthSheet, closeAuthSheet, submitAuthSheet, signOut, onAuthChange } from './auth.js';
 import { refreshEntitlement, migrateLocalProgress } from './entitlement.js';
@@ -28,7 +29,9 @@ function bind() {
     if (!c) return;
     audio();
     const id = c.dataset.game;
-    if (gateGame(id)) startRun(id, false);
+    if (!gateGame(id)) return;
+    // Drill fetches its set from the server before the run can start.
+    if (id === 'drill') startDrill('grid'); else startRun(id, false);
   });
 
   // auth strip — delegated, because renderMenu replaces its contents
@@ -108,16 +111,22 @@ function bind() {
   $('#r-again').addEventListener('click', () => {
     audio();
     if (S.isDaily) { setScreen('menu'); renderMenu(); return; }
+    if (S.game === 'drill') { startDrill('again'); return; }
     if (!canRun()) { track('limit_hit', { game: S.game }); openReward('results'); return; }
     startRun(S.game, false);
   });
   $('#r-menu').addEventListener('click', () => { setScreen('menu'); renderMenu(); });
   $('#r-share').addEventListener('click', share);
 
-  // results-screen dynamic CTAs — delegated
+  // results-screen dynamic CTAs — delegated, since the panel is re-rendered
+  // and partly filled in asynchronously
   $('#screen-results').addEventListener('click', e => {
     const cta = e.target.closest('#r-locked-cta');
-    if (cta) openPaywall('You were **' + (cta.dataset.acc || 0) + '% accurate** this run. Pro shows you exactly where the misses cluster.', 'results');
+    if (cta) {
+      openPaywall('You were **' + (cta.dataset.acc || 0) + '% accurate** this run. Pro shows you exactly where the misses cluster — and drills them.', 'results');
+      return;
+    }
+    if (e.target.closest('#weak-drill-btn')) { audio(); startDrill('report'); }
   });
 
   // paywall
@@ -162,9 +171,12 @@ function onKey(e) {
   } else if (e.key === 'Enter') {
     e.preventDefault();
     audio();
-    if (S.screen === 'menu') { if (gateGame(S.game)) startRun(S.game, false); }
-    else if (S.screen === 'results' && !S.isDaily) {
-      if (canRun()) startRun(S.game, false);
+    if (S.screen === 'menu') {
+      if (!gateGame(S.game)) return;
+      if (S.game === 'drill') startDrill('kbd'); else startRun(S.game, false);
+    } else if (S.screen === 'results' && !S.isDaily) {
+      if (S.game === 'drill') startDrill('kbd');
+      else if (canRun()) startRun(S.game, false);
       else { track('limit_hit', { game: S.game }); openReward('kbd'); }
     }
   }
@@ -182,7 +194,9 @@ async function init() {
   // never imports the network layer.
   setAttemptSink(recordAttempt);
   setRunSink(submitRun);
+  setResultsHook(onResults);
   initRunLog();
+  initDrills();
 
   S.stats = DEF_STATS();
   S.meter = DEF_METER();

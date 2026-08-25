@@ -19,7 +19,7 @@ const isProInUi = page => page.evaluate(() => ({
 describe('entitlement is server-decided', () => {
   test('a free /api/me leaves the client on the free tier', async () => {
     const { page, ctx, errors } = await openApp(browser, srv.origin);
-    assert.deepEqual(await isProInUi(page), { flag: false, badge: false, cta: true, lockedCards: 2 });
+    assert.deepEqual(await isProInUi(page), { flag: false, badge: false, cta: true, lockedCards: 3 });
     assert.deepEqual(errors, []);
     await ctx.close();
   });
@@ -51,7 +51,7 @@ describe('entitlement is server-decided', () => {
     await page.waitForFunction(() => window.__mindsharp && window.__mindsharp.booted);
     const ui = await isProInUi(page);
     assert.equal(ui.flag, false, 'a forged local entitlement must not grant Pro');
-    assert.equal(ui.lockedCards, 2, 'Pro games stay locked');
+    assert.equal(ui.lockedCards, 3, 'Pro games stay locked');
     await ctx.close();
   });
 
@@ -72,7 +72,7 @@ describe('failure modes', () => {
     const { page, ctx } = await openApp(browser, srv.origin, { apiDown: true });
     const ui = await isProInUi(page);
     assert.equal(ui.flag, false);
-    assert.equal(ui.lockedCards, 2);
+    assert.equal(ui.lockedCards, 3);
     // and the game is still playable offline
     await page.click('.gcard[data-game="blitz"]');
     await page.waitForSelector('#screen-game.active');

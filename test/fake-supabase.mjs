@@ -93,11 +93,16 @@ export async function fakeSupabase(seed = {}) {
 
     let matched = rows.filter(r => matches(r, url.searchParams));
 
-    if (req.method === 'GET') {
+    // HEAD is how supabase-js asks for a count without the rows
+    // ({ count: 'exact', head: true }), so it must go through the same
+    // filtering and report the same Content-Range.
+    if (req.method === 'GET' || req.method === 'HEAD') {
+      const total = matched.length;
       if (url.searchParams.has('limit')) matched = matched.slice(0, Number(url.searchParams.get('limit')));
-      if (String(req.headers.prefer || '').includes('count=exact')) {
-        res.setHeader('Content-Range', `0-${Math.max(0, matched.length - 1)}/${matched.length}`);
+      if (prefer.includes('count=exact') || url.searchParams.has('count')) {
+        res.setHeader('Content-Range', total ? `0-${total - 1}/${total}` : `*/0`);
       }
+      if (req.method === 'HEAD') { res.writeHead(200, { 'Content-Type': 'application/json' }); return res.end(); }
       if (wantsObject) {
         if (matched.length === 0) return send(res, 406, { code: 'PGRST116', message: 'no rows', details: 'Results contain 0 rows' });
         return send(res, 200, matched[0]);
@@ -115,7 +120,6 @@ export async function fakeSupabase(seed = {}) {
       return send(res, 200, matched);
     }
 
-    if (req.method === 'HEAD') { res.writeHead(200); return res.end(); }
     return send(res, 405, { message: 'method not allowed' });
   });
 

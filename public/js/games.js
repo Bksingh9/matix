@@ -10,9 +10,10 @@ export const GAMES = {
   target:   { name: 'Target',   glyph: '◎', pro: true,  desc: 'Combine numbers to hit the target exactly.',      input: 'chips', timer: 'run',     duration: 90 },
   recall:   { name: 'Recall',   glyph: '◈', pro: true,  desc: 'A number flashes. Type it back from memory.',     input: 'pad',   timer: 'problem', lives: 3 },
   zen:      { name: 'Zen',      glyph: '∞', pro: false, desc: 'No clock, no lives. Just repetitions.',           input: 'pad',   timer: 'none' },
-  // hidden until Phase 5 lands the drill client — a visible card that leads
-  // nowhere is worse than no card.
-  drill:    { name: 'Drill',    glyph: '◇', pro: true,  desc: 'Twenty problems aimed at your weakest buckets.',  input: 'pad',   timer: 'problem', lives: 99, hidden: true },
+  // Practice, not a test: no clock, no lives lost. The set comes from the
+  // server pre-generated, and the band sets the difficulty — the difficulty
+  // selector is deliberately ignored.
+  drill:    { name: 'Drill',    glyph: '◇', pro: true,  desc: 'Twenty problems aimed at your weakest buckets.',  input: 'pad',   timer: 'problem', lives: 99 },
   daily:    { name: 'Daily',    glyph: '★', pro: false, desc: "Today's twelve.", input: 'pad', timer: 'none', hidden: true, total: 12 }
 };
 
@@ -111,10 +112,15 @@ export function genRecall() {
 
 /* A drill problem comes from the server pre-generated, so pre/post
    comparison is honest. The client only renders it. */
+const BAND_NOTE = { 1: '0–9', 2: '10–99', 3: '100–999', 4: '1000+' };
+
 export function fromDrill(p) {
   return {
     kind: 'pad', op: p.op, a: p.a, b: p.b, answer: p.answer, band: p.band, difficulty: p.difficulty,
-    html: p.a + '<span class="op">' + OPSYM[p.op] + '</span>' + p.b, sub: ''
+    html: p.a + '<span class="op">' + OPSYM[p.op] + '</span>' + p.b,
+    // Says which bucket this problem is targeting, so the numbers ignoring the
+    // difficulty selector reads as intent rather than a bug.
+    sub: 'Targeting ' + (BAND_NOTE[p.band] || '')
   };
 }
 

@@ -14,7 +14,7 @@ describe('app boot', () => {
   test('loads with no console errors and renders the menu', async () => {
     const { page, ctx, errors } = await openApp(browser, srv.origin);
     assert.equal(await page.locator('#screen-menu.active').count(), 1);
-    assert.equal(await page.locator('.gcard').count(), 7, 'seven visible game cards');
+    assert.equal(await page.locator('.gcard').count(), 8, 'seven training games plus Drill');
     assert.match(await page.locator('#runs-pill').innerText(), /5 runs left/);
     assert.deepEqual(errors, []);
     await ctx.close();
@@ -22,7 +22,7 @@ describe('app boot', () => {
 
   test('locked Pro games show a Pro chip and open the paywall', async () => {
     const { page, ctx, errors } = await openApp(browser, srv.origin);
-    assert.equal(await page.locator('.gcard.locked').count(), 2, 'Target + Recall locked');
+    assert.equal(await page.locator('.gcard.locked').count(), 3, 'Target, Recall and Drill locked');
     await page.click('.gcard[data-game="target"]');
     await page.waitForSelector('#paywall.show');
     assert.match(await page.locator('#pw-reason').innerText(), /Target/);
