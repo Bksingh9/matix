@@ -1,0 +1,16 @@
+/* Legal pages: same palette as the app, laid out for reading rather than play. */
+body{align-items:flex-start;justify-content:center;padding:28px 18px 60px;}
+.legal{width:100%;max-width:640px;line-height:1.65;}
+.legal .back{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-dim);text-decoration:none;display:inline-block;margin-bottom:26px;}
+.legal .back:hover{color:var(--amber);}
+.legal h1{font-weight:800;font-size:clamp(28px,7vw,38px);letter-spacing:-.02em;margin-bottom:6px;}
+.legal .updated{font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:30px;}
+.legal h2{font-weight:700;font-size:19px;letter-spacing:-.01em;margin:30px 0 9px;color:var(--amber);}
+.legal h3{font-weight:700;font-size:15px;margin:20px 0 6px;color:var(--ink);}
+.legal p{font-size:14.5px;color:var(--ink-dim);margin-bottom:13px;}
+.legal p strong{color:var(--ink);font-weight:700;}
+.legal em{color:var(--ink);font-style:normal;font-weight:600;}
+.legal ul{margin:0 0 14px 18px;}
+.legal li{font-size:14.5px;color:var(--ink-dim);margin-bottom:8px;}
+.legal li strong{color:var(--ink);}
+.legal a{color:var(--amber);text-underline-offset:3px;}

@@ -281,3 +281,5 @@ details.settings[open] summary{color:var(--amber);border-bottom:1px solid var(--
 .ba-row.flat .ba-delta{color:var(--ink-faint);}
 .ba-sub{font-family:var(--mono);font-size:9px;color:var(--ink-faint);padding:3px 0 5px;border-bottom:1px solid var(--line);}
 .ba-sub:last-child{border-bottom:none;}
+/* The account chip shows an email address; uppercasing one is wrong. */
+#auth-acct{text-transform:none;letter-spacing:.02em;max-width:132px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}

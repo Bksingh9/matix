@@ -70,8 +70,10 @@ export function renderAuth() {
   const el = $('#auth-strip');
   if (!el) return;
   if (S.authed && S.user) {
-    el.innerHTML = '<span class="auth-mail" title="' + esc(S.user.email || '') + '">' + esc(shortMail(S.user.email)) + '</span>'
-      + '<button class="auth-link" id="auth-out">Sign out</button>';
+    // One control, not two: it opens the account sheet, which is where signing
+    // out and cancelling both live.
+    el.innerHTML = '<button class="auth-link" id="auth-acct" title="' + esc(S.user.email || '') + '">'
+      + esc(shortMail(S.user.email)) + '</button>';
   } else {
     el.innerHTML = '<button class="auth-link" id="auth-in">Sign in</button>';
   }

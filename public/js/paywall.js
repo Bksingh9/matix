@@ -35,7 +35,7 @@ export const rwNote = (html, err) => { $('#rw-msg').innerHTML = '<div class="not
 export async function startCheckout(plan) {
   track('plan_click', { plan, price: CONFIG.prices[plan] });
 
-  if (!isAuthed() && !S.authed) {
+  if (!S.authed && !isAuthed()) {
     pwNote('Sign in first — a purchase has to attach to an account, or it can’t follow you to another device.');
     openAuthSheet('checkout', 'Sign in to buy. Your subscription lives on the account, not in this browser.');
     return;
@@ -133,7 +133,10 @@ export async function tryLicence() {
   const key = $('#lic-input').value.trim().toUpperCase();
   if (!key) { pwNote('Enter the key from your purchase email.', true); return; }
 
-  if (!isAuthed()) {
+  // S.authed first: /api/me only reports authed:true for a request that
+  // carried a valid token, so it is the server's answer rather than whether
+  // the auth SDK happens to have loaded.
+  if (!S.authed && !isAuthed()) {
     pwNote('Sign in first, then enter your key — that’s what binds the licence to an account instead of this browser.', true);
     openAuthSheet('licence', 'Sign in to attach your licence key to an account. Without one, the key can’t follow you to another device.');
     return;

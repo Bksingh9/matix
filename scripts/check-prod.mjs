@@ -38,9 +38,25 @@ for (const f of ['public/js/paywall.js', 'public/js/main.js', 'public/js/engine.
 }
 
 // 3. Analytics must actually be on, or the funnel is blind.
-if (/analytics\s*:\s*\{\s*enabled\s*:\s*false/.test(config)) {
+if (/analytics\s*:\s*\{[\s\S]{0,80}enabled\s*:\s*false/.test(config)) {
   problems.push('public/js/config.js — analytics disabled; the funnel will record nothing.');
 }
+
+// 4. The merchant of record requires these, and so does anyone deciding
+//    whether to type a card number into your site.
+for (const page of ['public/legal/terms.html', 'public/legal/privacy.html', 'public/legal/refunds.html']) {
+  try { read(page); } catch { problems.push(`${page} is missing — the merchant of record requires it before you can sell.`); }
+}
+
+// 5. The paywall must not promise a feature that isn't wired up. Selling
+//    something that doesn't exist is the fastest route to a refund.
+try {
+  const html = read('public/index.html');
+  if (/Drills built from your own misses/i.test(html)) {
+    const drillsWired = read('public/js/drills.js').includes('/api/drills');
+    if (!drillsWired) problems.push('public/index.html — the paywall promises drills, but drills.js does not call /api/drills.');
+  }
+} catch { /* checked elsewhere */ }
 
 if (problems.length) {
   console.error('✗ Production guards FAILED:\n');

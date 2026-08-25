@@ -22,7 +22,15 @@ export const CONFIG = {
   prices: { monthly: '$4.99', yearly: '$29.99', lifetime: '$69' },
   ads: { enabled: false, rewardRuns: 2, maxRewardsPerDay: 2 },
   freeRuns: 5,
-  analytics: { enabled: true },
-  // Phase 6 flips this to false and `npm run check:prod` enforces it.
-  devMode: true
+  analytics: {
+    enabled: true,
+    // Plausible: cookieless and aggregate, so there is nothing to consent to
+    // and no banner to show. Set `domain` to the site registered in your
+    // Plausible account; leaving it empty disables the script and track()
+    // falls back to whatever else is on the page (gtag, dataLayer).
+    plausible: { domain: '', src: 'https://plausible.io/js/script.js' }
+  },
+  // The dev Pro preview is a free Pro button. `npm run check:prod` fails a
+  // production build if this is ever true again.
+  devMode: false
 };

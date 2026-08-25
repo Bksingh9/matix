@@ -55,11 +55,18 @@ describe('entitlement is server-decided', () => {
     await ctx.close();
   });
 
-  test('the dev preview button cannot switch Pro on', async () => {
+  test('the dev preview button cannot switch Pro on, even with devMode enabled', async () => {
     const { page, ctx } = await openApp(browser, srv.origin);
+    // devMode is false in production, so the button is hidden — that is
+    // asserted separately. Force it on here to prove the stronger property:
+    // even when the button is live, no client code can grant Pro.
+    await page.evaluate(async () => {
+      const { CONFIG } = await import('/js/config.js');
+      CONFIG.devMode = true;
+    });
     await page.click('#pro-cta');
     await page.waitForSelector('#paywall.show');
-    await page.click('#pw-demo');
+    await page.evaluate(() => document.querySelector('#pw-demo').click());
     await page.waitForSelector('#pw-msg .notice');
     assert.equal((await isProInUi(page)).flag, false, 'no button can grant Pro any more');
     assert.match(await page.locator('#pw-msg').innerText(), /decided by the server/i);
@@ -148,10 +155,16 @@ describe('sign-in', () => {
     await ctx.close();
   });
 
-  test('the strip shows the email and a sign-out when authed', async () => {
+  test('the strip shows the account chip when authed', async () => {
     const { page, ctx } = await openApp(browser, srv.origin, { pro: true });
-    assert.match(await page.locator('#auth-strip').innerText(), /player@example\.com|player@|…/);
-    await page.waitForSelector('#auth-out');
+    await page.waitForSelector('#auth-acct');
+    const chip = await page.locator('#auth-acct').innerText();
+    assert.match(chip, /player@example\.com|player@/i);
+    assert.equal(chip, chip.toLowerCase(), 'an email address is not shouted at the user');
+    // and it opens the account sheet, where signing out and cancelling live
+    await page.click('#auth-acct');
+    await page.waitForSelector('#acctm.show');
+    await page.waitForSelector('#acct-signout');
     await ctx.close();
   });
 

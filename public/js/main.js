@@ -1,6 +1,6 @@
 import { S, loadAll, savePrefs, DEF_STATS, DEF_METER, canRun, runsLeft } from './state.js';
 import { K, sdel } from './store.js';
-import { track } from './analytics.js';
+import { track, initAnalytics } from './analytics.js';
 import { $, $$, cap1 } from './util.js';
 import { audio } from './audio.js';
 import { setScreen, renderMenu, syncSound, updAnswer } from './ui.js';
@@ -11,7 +11,8 @@ import {
 import { recordAttempt, submitRun, flush, initRunLog } from './runlog.js';
 import { initDrills, startDrill, onResults } from './drills.js';
 import { openPaywall, closePaywall, openReward, closeReward, startCheckout, watchReward, devPreviewPro, tryLicence, resumeAfterCheckout } from './paywall.js';
-import { initAuth, openAuthSheet, closeAuthSheet, submitAuthSheet, signOut, onAuthChange } from './auth.js';
+import { initAuth, openAuthSheet, closeAuthSheet, submitAuthSheet, onAuthChange } from './auth.js';
+import { openAccount, closeAccount, openPortal, doSignOut } from './account.js';
 import { refreshEntitlement, migrateLocalProgress } from './entitlement.js';
 
 /* ============================================================ BINDINGS
@@ -21,7 +22,14 @@ import { refreshEntitlement, migrateLocalProgress } from './entitlement.js';
    and the module graph acyclic. */
 function bind() {
   $('#pro-cta').addEventListener('click', () => openPaywall(null, 'topbar'));
+  // The Pro badge is the way in to cancelling, so it has to be a button.
+  $('#pro-badge').addEventListener('click', () => openAccount('badge'));
   $('#daily-card').addEventListener('click', () => { audio(); startRun('daily', true); });
+
+  $('#acct-x').addEventListener('click', closeAccount);
+  $('#acctm').addEventListener('click', e => { if (e.target.id === 'acctm') closeAccount(); });
+  $('#acct-manage').addEventListener('click', openPortal);
+  $('#acct-signout').addEventListener('click', doSignOut);
 
   // game grid — delegated
   $('#game-grid').addEventListener('click', e => {
@@ -37,7 +45,7 @@ function bind() {
   // auth strip — delegated, because renderMenu replaces its contents
   $('#auth-strip').addEventListener('click', e => {
     if (e.target.closest('#auth-in')) openAuthSheet('topbar');
-    else if (e.target.closest('#auth-out')) signOut();
+    else if (e.target.closest('#auth-acct')) openAccount('strip');
   });
   $('#auth-x').addEventListener('click', closeAuthSheet);
   $('#authm').addEventListener('click', e => { if (e.target.id === 'authm') closeAuthSheet(); });
@@ -147,8 +155,8 @@ function bind() {
 }
 
 function onKey(e) {
-  if ($('#paywall').classList.contains('show') || $('#rewardm').classList.contains('show') || $('#authm').classList.contains('show')) {
-    if (e.key === 'Escape') { closePaywall(); closeReward(); closeAuthSheet(); }
+  if (['#paywall', '#rewardm', '#authm', '#acctm'].some(id => $(id).classList.contains('show'))) {
+    if (e.key === 'Escape') { closePaywall(); closeReward(); closeAuthSheet(); closeAccount(); }
     return;
   }
   if (S.screen === 'game') {
@@ -188,6 +196,7 @@ async function init() {
   // decided by the server and S.pro is only a mirror of what /api/me said.
   window.__mindsharp.S = S;
 
+  initAnalytics();
   bind();
 
   // The engine reports attempts and finished runs through these sinks, so it

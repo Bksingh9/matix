@@ -13,11 +13,12 @@
     "check:secrets": "node scripts/check-secrets.mjs",
     "check:prod": "node scripts/check-prod.mjs",
     "check:syntax": "node scripts/check-syntax.mjs",
-    "check": "npm run check:syntax && npm run check:secrets && npm run test",
+    "check": "npm run check:syntax && npm run check:secrets && npm run check:events && npm run test",
     "e2e": "node --test \"test/e2e/*.test.mjs\"",
     "verify": "npm run check && npm run e2e",
     "build": "npm run check:secrets && npm run check:prod",
-    "verify:rls": "node scripts/verify-rls.mjs"
+    "verify:rls": "node scripts/verify-rls.mjs",
+    "check:events": "node scripts/check-events.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.0"

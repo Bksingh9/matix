@@ -21,7 +21,7 @@
         <span class="auth-strip" id="auth-strip"></span>
         <span class="runs-pill" id="runs-pill"><b>5</b> runs left</span>
         <button class="pro-btn" id="pro-cta">Get Pro</button>
-        <span class="pro-badge" id="pro-badge" style="display:none;">Pro</span>
+        <button class="pro-badge" id="pro-badge" style="display:none;" aria-label="Your account">Pro</button>
       </div>
     </div>
 
@@ -142,11 +142,11 @@
     <h3>MindSharp Pro</h3>
     <div class="sub" id="pw-reason">Unlimited runs, every game, and a report on what's actually slowing you down.</div>
     <div class="perks">
-      <div class="perk"><span class="tick">◆</span><span>Unlimited runs — no daily cap</span></div>
-      <div class="perk"><span class="tick">◆</span><span>Target, Recall and Expert difficulty unlocked</span></div>
-      <div class="perk"><span class="tick">◆</span><span>Weak-spot report: accuracy and speed per operation</span></div>
-      <div class="perk"><span class="tick">◆</span><span>Drills built from your own misses</span></div>
-      <div class="perk"><span class="tick">◆</span><span>No ads, ever</span></div>
+      <div class="perk"><span class="tick">◆</span><span><b>Weak-spot report</b> — which operations and number ranges actually cost you time</span></div>
+      <div class="perk"><span class="tick">◆</span><span><b>Drill mode</b> — twenty problems built from your own misses, and the before/after when you finish</span></div>
+      <div class="perk"><span class="tick">◆</span><span>Progress that follows your account across devices</span></div>
+      <div class="perk"><span class="tick">◆</span><span>Unlimited runs, no daily cap</span></div>
+      <div class="perk"><span class="tick">◆</span><span>Target, Recall, Expert difficulty — and no ads, ever</span></div>
     </div>
     <div class="plans" id="plans">
       <button class="plan" data-plan="monthly"><span class="pl-l"><span class="pn">Monthly</span><span class="pd">Cancel anytime</span></span><span class="pp" id="pp-m">$4.99</span></button>
@@ -161,6 +161,13 @@
         <button id="lic-btn">Unlock</button>
       </div>
       <button class="linkish" id="pw-demo">Preview Pro in this browser (demo)</button>
+      <div class="plan-note">
+        Sold by Lemon Squeezy as merchant of record. Prices in USD before local tax.
+        Subscriptions renew until cancelled; cancelling keeps access to the end of the paid period.
+        <a href="/legal/refunds" target="_blank" rel="noopener">Refunds</a> ·
+        <a href="/legal/terms" target="_blank" rel="noopener">Terms</a> ·
+        <a href="/legal/privacy" target="_blank" rel="noopener">Privacy</a>
+      </div>
     </div>
   </div>
 </div>
@@ -195,6 +202,27 @@
     </div>
     <div class="lk-p" style="margin-top:14px;font-family:var(--mono);font-size:10px;line-height:1.6;color:var(--ink-dim);">
       No password. We email you a one-time link. Your address is used to sign you in and to attach a purchase to your account — nothing else.
+    </div>
+  </div>
+</div>
+
+<!-- ==================== ACCOUNT ==================== -->
+<div class="modal" id="acctm">
+  <div class="sheet">
+    <button class="sheet-x" id="acct-x" aria-label="Close">✕</button>
+    <h3>Your account</h3>
+    <div class="sub" id="acct-sub">—</div>
+    <div id="acct-msg"></div>
+    <div class="r-actions" style="margin-top:2px;">
+      <button class="btn-primary" id="acct-manage">Manage subscription</button>
+      <button class="btn-ghost" id="acct-signout">Sign out</button>
+    </div>
+    <div class="plan-note" style="margin-top:16px;">
+      Billing is handled by Lemon Squeezy, our merchant of record. Cancelling stops the next
+      renewal and keeps your access until the paid period ends.
+      <a href="/legal/refunds" target="_blank" rel="noopener">Refunds</a> ·
+      <a href="/legal/terms" target="_blank" rel="noopener">Terms</a> ·
+      <a href="/legal/privacy" target="_blank" rel="noopener">Privacy</a>
     </div>
   </div>
 </div>
