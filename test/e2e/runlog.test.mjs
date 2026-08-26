@@ -81,10 +81,14 @@ describe('attempt collection', () => {
     await page.click('.gcard[data-game="zen"]');
     await page.waitForSelector('#screen-game.active');
 
-    // Answer deliberately wrong.
+    // Answer deliberately wrong — but with the same number of digits as the
+    // right answer. Auto-submit fires at that length and caps input there, so
+    // a wrong answer one digit longer (answer 99 -> "100") gets truncated to
+    // "10" and submitted against the next problem instead.
     const wrong = await page.evaluate(() => {
-      const p = window.__mindsharp.S.problem;
-      return String(p.answer + 1);
+      const a = window.__mindsharp.S.problem.answer;
+      const sameLength = n => String(n).length === String(a).length;
+      return String(sameLength(a + 1) ? a + 1 : a - 1);
     });
     for (const ch of wrong) await page.click(`#panel-pad .key[data-key="${ch}"]`);
     await page.evaluate(() => { if (!window.__mindsharp.S.locked) document.querySelector('#panel-pad .key.enter').click(); });
