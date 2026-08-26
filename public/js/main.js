@@ -14,6 +14,7 @@ import { initDrills, startDrill, onResults } from './drills.js';
 import { openPaywall, closePaywall, openReward, closeReward, startCheckout, watchReward, devPreviewPro, tryLicence, resumeAfterCheckout } from './paywall.js';
 import { initAuth, openAuthSheet, closeAuthSheet, submitAuthSheet, onAuthChange } from './auth.js';
 import { openAccount, closeAccount, openPortal, doSignOut } from './account.js';
+import { openSocial, closeSocial, setTab, saveHandle, socialSignIn } from './social.js';
 import { refreshEntitlement, migrateLocalProgress } from './entitlement.js';
 
 /* ============================================================ BINDINGS
@@ -26,6 +27,22 @@ function bind() {
   // The Pro badge is the way in to cancelling, so it has to be a button.
   $('#pro-badge').addEventListener('click', () => openAccount('badge'));
   $('#daily-card').addEventListener('click', () => { audio(); startRun('daily', true); });
+
+  $('#social-cta').addEventListener('click', () => openSocial('menu'));
+  $('#social-x').addEventListener('click', closeSocial);
+  $('#socialm').addEventListener('click', e => { if (e.target.id === 'socialm') closeSocial(); });
+  // The sheet's contents are re-rendered on every tab switch, so delegate.
+  $('#social-tabs').addEventListener('click', e => {
+    const t = e.target.closest('.stab');
+    if (t) setTab(t.dataset.tab);
+  });
+  $('#social-body').addEventListener('click', e => {
+    if (e.target.closest('#handle-save')) saveHandle();
+    else if (e.target.closest('#social-signin')) socialSignIn();
+  });
+  $('#social-body').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && e.target.id === 'handle-input') saveHandle();
+  });
 
   $('#level-chip').addEventListener('click', () => openProfile('level_chip'));
   $('#streak-chip').addEventListener('click', () => openProfile('streak_chip'));
@@ -161,8 +178,8 @@ function bind() {
 }
 
 function onKey(e) {
-  if (['#paywall', '#rewardm', '#authm', '#acctm', '#profm'].some(id => $(id).classList.contains('show'))) {
-    if (e.key === 'Escape') { closePaywall(); closeReward(); closeAuthSheet(); closeAccount(); closeProfile(); }
+  if (['#paywall', '#rewardm', '#authm', '#acctm', '#profm', '#socialm'].some(id => $(id).classList.contains('show'))) {
+    if (e.key === 'Escape') { closePaywall(); closeReward(); closeAuthSheet(); closeAccount(); closeProfile(); closeSocial(); }
     return;
   }
   if (S.screen === 'game') {

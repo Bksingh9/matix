@@ -78,14 +78,23 @@ describe('funnel events', () => {
     const { page, ctx } = await openApp(browser, srv.origin, {
       api: {
         '/api/me': { status: 200, body: { ...FREE_ME, authed: true, user: { id: 'u1', email: 'a@b.co' } } },
-        '/api/checkout': { status: 200, body: { url: 'about:blank', plan: 'yearly' } }
+        '/api/checkout': { status: 200, body: { url: srv.origin + '/__checkout_redirect', plan: 'yearly' } }
       }
     });
     await page.click('#pro-cta');
     await page.waitForSelector('#paywall.show');
-    await page.click('#plans .plan[data-plan="yearly"]');
-    await page.waitForFunction(() => window.__mindsharp.events.some(e => e.name === 'plan_click'));
-    const p = await props(page, 'plan_click');
+
+    // startCheckout navigates in the same tab (a popup is blocked on iOS), so
+    // the page is gone by the time a separate evaluate could read the bus.
+    // track('plan_click') fires synchronously at the top of startCheckout,
+    // before any await — so click and read in one evaluate and there is no
+    // race to lose.
+    const p = await page.evaluate(() => {
+      document.querySelector('#plans .plan[data-plan="yearly"]').click();
+      const e = window.__mindsharp.events.find(x => x.name === 'plan_click');
+      return e ? e.props : null;
+    });
+    assert.ok(p, 'plan_click fired');
     assert.equal(p.plan, 'yearly');
     assert.equal(p.price, '$29.99');
     await ctx.close();

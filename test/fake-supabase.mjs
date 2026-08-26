@@ -58,6 +58,65 @@ export async function fakeSupabase(seed = {}) {
         for (const a of (b.p_attempts || [])) attempts.push({ id: attempts.length + 1, run_id: id, user_id: b.p_user_id, ...a });
         return send(res, 200, id);
       }
+      if (fn === 'current_season') {
+        const seasons = (tables.league_seasons ||= []);
+        return send(res, 200, seasons.length ? seasons[0].id : null);
+      }
+      if (fn === 'join_league') {
+        const b = body || {};
+        const seasons = (tables.league_seasons ||= []);
+        const groups = (tables.league_groups ||= []);
+        const mem = (tables.league_members ||= []);
+        const seasonId = seasons.length ? seasons[0].id : (seasons.push({ id: 1, starts_on: '2026-08-24', ends_on: '2026-08-30' }), 1);
+        const seasonGroupIds = new Set(groups.filter(g => g.season_id === seasonId).map(g => g.id));
+
+        const existing = mem.find(m => m.user_id === b.p_user_id && seasonGroupIds.has(m.group_id));
+        if (existing) return send(res, 200, existing.group_id);
+
+        const tier = (tables.league_standing || []).find(s => s.user_id === b.p_user_id)?.tier ?? 1;
+        const size = b.p_size ?? 30;
+        // Fullest group with room, so groups complete rather than scattering.
+        const candidates = groups
+          .filter(g => g.season_id === seasonId && g.tier === tier)
+          .map(g => ({ g, n: mem.filter(m => m.group_id === g.id).length }))
+          .filter(x => x.n < size)
+          .sort((a, z) => z.n - a.n);
+        let groupId = candidates[0]?.g.id;
+        if (groupId === undefined) {
+          groupId = groups.length ? Math.max(...groups.map(g => g.id)) + 1 : 1;
+          groups.push({ id: groupId, season_id: seasonId, tier });
+        }
+        mem.push({ group_id: groupId, user_id: b.p_user_id, xp: 0, joined_at: new Date().toISOString() });
+        return send(res, 200, groupId);
+      }
+      if (fn === 'add_league_xp') {
+        const b = body || {};
+        const mem = (tables.league_members ||= []);
+        const row = mem.find(m => m.user_id === b.p_user_id);
+        if (row) row.xp += b.p_xp || 0;
+        return send(res, 200, null);
+      }
+      if (fn === 'settle_season') {
+        const b = body || {};
+        const groups = (tables.league_groups || []).filter(g => g.season_id === b.p_season_id);
+        const ids = new Set(groups.map(g => g.id));
+        const rows = (tables.league_members || []).filter(m => ids.has(m.group_id));
+        const standing = (tables.league_standing ||= []);
+        for (const g of groups) {
+          const inGroup = rows.filter(m => m.group_id === g.id).sort((a, z) => z.xp - a.xp);
+          inGroup.forEach((m, i) => {
+            const size = inGroup.length;
+            const result = size >= 10 && i < 5 ? 'promoted'
+              : size >= 10 && i >= size - 5 && m.xp === 0 ? 'relegated' : 'held';
+            const tier = result === 'promoted' ? Math.min(5, g.tier + 1)
+              : result === 'relegated' ? Math.max(1, g.tier - 1) : g.tier;
+            const prev = standing.find(s => s.user_id === m.user_id);
+            if (prev) Object.assign(prev, { tier, last_result: result });
+            else standing.push({ user_id: m.user_id, tier, last_result: result });
+          });
+        }
+        return send(res, 200, rows.length);
+      }
       return send(res, 404, { message: `function ${fn} not found` });
     }
 
@@ -138,20 +197,51 @@ export async function fakeSupabase(seed = {}) {
   };
 }
 
-/* Translate the subset of PostgREST filter syntax the app actually uses. */
+/* Translate the subset of PostgREST filter syntax the app actually uses.
+ *
+ * An unrecognised operator is reported loudly rather than ignored. A filter
+ * that silently becomes a no-op makes a wrong query pass its test — which is
+ * how a "settle finished seasons" endpoint ends up settling the live one. */
+const KNOWN_OPS = new Set(['eq', 'neq', 'ilike', 'like', 'is', 'gt', 'gte', 'lt', 'lte', 'in']);
+
 function matches(row, params) {
   for (const [key, raw] of params.entries()) {
     if (['select', 'limit', 'offset', 'order', 'on_conflict', 'columns'].includes(key)) continue;
     const [op, ...rest] = String(raw).split('.');
     const value = rest.join('.');
     const cell = row[key];
+
+    if (!KNOWN_OPS.has(op)) {
+      throw new Error(`fake-supabase: unsupported filter "${key}=${raw}". Add it to matches() rather than letting it pass silently.`);
+    }
+
     if (op === 'eq' && String(cell) !== value) return false;
     if (op === 'neq' && String(cell) === value) return false;
-    if (op === 'ilike' && String(cell ?? '').toLowerCase() !== value.replace(/%/g, '').toLowerCase()) return false;
+    if ((op === 'ilike' || op === 'like') && String(cell ?? '').toLowerCase() !== value.replace(/%/g, '').toLowerCase()) return false;
     if (op === 'is' && !(value === 'null' ? cell == null : String(cell) === value)) return false;
-    if (op === 'gte' && !(new Date(cell) >= new Date(value))) return false;
+    if (op === 'in') {
+      const list = value.replace(/^\(|\)$/g, '').split(',').map(v => v.replace(/^"|"$/g, ''));
+      if (!list.includes(String(cell))) return false;
+    }
+    if (['gt', 'gte', 'lt', 'lte'].includes(op)) {
+      const a = cmpValue(cell), b = cmpValue(value);
+      if (op === 'gt' && !(a > b)) return false;
+      if (op === 'gte' && !(a >= b)) return false;
+      if (op === 'lt' && !(a < b)) return false;
+      if (op === 'lte' && !(a <= b)) return false;
+    }
   }
   return true;
+}
+
+/* Dates compare as dates, numbers as numbers, everything else as strings. */
+function cmpValue(v) {
+  if (v == null) return -Infinity;
+  if (typeof v === 'number') return v;
+  const s = String(v);
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return Date.parse(s.length === 10 ? s + 'T00:00:00Z' : s);
+  const n = Number(s);
+  return Number.isFinite(n) && s.trim() !== '' ? n : s;
 }
 
 function send(res, status, body) {
