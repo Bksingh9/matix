@@ -36,6 +36,9 @@ export function renderMenu() {
   $('#pp-l').textContent = CONFIG.prices.lifetime;
   $('#rw-watch').textContent = 'Watch ad · +' + CONFIG.ads.rewardRuns + ' runs';
   $('#pw-demo').style.display = CONFIG.devMode ? '' : 'none';
+  // Restore is required by App Review, and meaningless on the web.
+  const restoreBtn = $('#pw-restore');
+  if (restoreBtn) restoreBtn.style.display = window.Capacitor?.isNativePlatform?.() ? '' : 'none';
 
   const bests = Object.keys(st.best).map(k => st.best[k]);
   $('#s-best').textContent = fmt(bests.length ? Math.max.apply(null, bests) : 0);

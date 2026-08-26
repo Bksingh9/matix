@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "MindSharp \u2014 mental-arithmetic fitness tracker. Vanilla JS frontend + Vercel serverless functions + Supabase.",
+  "description": "MindSharp — mental-arithmetic fitness tracker. Vanilla JS frontend + Vercel serverless functions + Supabase.",
   "engines": {
     "node": ">=20"
   },
@@ -36,7 +36,8 @@
     "@capacitor/push-notifications": "^6.0.5",
     "@capacitor/splash-screen": "^6.0.4",
     "@capacitor/status-bar": "^6.0.3",
-    "@supabase/supabase-js": "^2.45.0"
+    "@supabase/supabase-js": "^2.45.0",
+    "cordova-plugin-purchase": "^13.18.0"
   },
   "devDependencies": {
     "@capacitor/android": "^6.2.1",

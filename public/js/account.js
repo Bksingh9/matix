@@ -4,6 +4,7 @@ import { $ } from './util.js';
 import { esc } from './ui.js';
 import { get } from './api.js';
 import { signOut } from './auth.js';
+import { manageUrl } from './billing.js';
 
 /* The account sheet: what you are on, when it renews, and the one link that
    lets you cancel without emailing anyone.
@@ -60,6 +61,14 @@ function describe() {
 }
 
 export async function openPortal() {
+  // A subscription bought through the App Store or Play Store can only be
+  // cancelled in the OS. Our billing portal has no authority over it, and
+  // sending someone there would be a dead end.
+  if (S.plan !== 'free' && ['play', 'appstore'].includes(S.source)) {
+    const url = manageUrl();
+    if (url) { track('portal_open', { plan: S.plan, rail: S.source }); window.open(url, '_blank', 'noopener'); return; }
+  }
+
   const btn = $('#acct-manage');
   const original = btn.textContent;
   btn.textContent = 'Opening…';

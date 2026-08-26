@@ -6,6 +6,7 @@ import { renderMenu, renderRuns } from './ui.js';
 import { isAuthed, openAuthSheet } from './auth.js';
 import { validateLicence, pollForPro } from './entitlement.js';
 import { post } from './api.js';
+import { billingAvailable, buy, restore } from './billing.js';
 
 /* Paywall + run-limit sheets. Imports ui.js but never engine.js, so the
    module graph stays acyclic. */
@@ -34,6 +35,20 @@ export const rwNote = (html, err) => { $('#rw-msg').innerHTML = '<div class="not
    to — which is a refund and a support ticket, not a sale. */
 export async function startCheckout(plan) {
   track('plan_click', { plan, price: CONFIG.prices[plan] });
+
+  // On a device, the store's billing is the only permitted rail for digital
+  // goods in a game. Sending someone to a web checkout from inside the app —
+  // or even mentioning that it is cheaper — is what gets builds rejected.
+  if (billingAvailable()) {
+    pwNote('Opening the App Store…');
+    const r = await buy(plan);
+    if (r.ok) { pwNote('Confirming your purchase…'); return; }
+    if (r.reason === 'cancelled') { $('#pw-msg').innerHTML = ''; return; }
+    pwNote(r.reason === 'no_offer'
+      ? 'That plan isn’t available on this device yet.'
+      : 'Couldn’t start the purchase. Nothing has been charged — try again in a moment.', true);
+    return;
+  }
 
   if (!S.authed && !isAuthed()) {
     pwNote('Sign in first — a purchase has to attach to an account, or it can’t follow you to another device.');
@@ -66,6 +81,17 @@ export async function startCheckout(plan) {
   } finally {
     if (btn && original !== null) btn.textContent = original;
   }
+}
+
+/* Restore Purchases. App Review rejects any app selling non-consumables
+   without it, and a real user needs it after reinstalling. */
+export async function restorePurchases() {
+  if (!billingAvailable()) { pwNote('Nothing to restore here — purchases made on the web follow your account when you sign in.'); return; }
+  pwNote('Checking with the store…');
+  const r = await restore();
+  if (r.ok && S.pro) { pwNote('Restored. You’re Pro.'); renderMenu(); setTimeout(closePaywall, 1600); return; }
+  if (r.ok) { pwNote('No previous purchase found on this Apple ID or Google account.', true); return; }
+  pwNote('Couldn’t reach the store. Try again in a moment.', true);
 }
 
 /* Returning from a successful checkout. Webhooks are fast but not instant, so

@@ -73,18 +73,25 @@ describe('shape', () => {
     const end = future();
     assert.deepEqual(
       shape({ plan: 'yearly', status: 'cancelled', current_period_end: end, cancel_at_period_end: true }),
-      { isPro: true, plan: 'yearly', status: 'cancelled', currentPeriodEnd: end, cancelAtPeriodEnd: true }
+      { isPro: true, plan: 'yearly', status: 'cancelled', currentPeriodEnd: end, cancelAtPeriodEnd: true, source: null }
     );
+  });
+
+  test('exposes which rail paid, so a cancellation goes to the right place', () => {
+    assert.equal(shape({ plan: 'yearly', status: 'active', source: 'appstore' }).source, 'appstore');
+    assert.equal(shape({ plan: 'yearly', status: 'active', source: 'play' }).source, 'play');
+    assert.equal(shape(null).source, null, 'and the free shape carries the same key');
   });
 
   test('never leaks store identifiers to the browser', () => {
     const out = shape({
       plan: 'lifetime', status: 'active', current_period_end: null,
       ls_customer_id: 'cus_123', ls_subscription_id: 'sub_456',
-      licence_key: 'SECRET-KEY-0001', user_id: 'uuid'
+      licence_key: 'SECRET-KEY-0001', user_id: 'uuid',
+      store_txn_id: 'apple:200000123456789', store_product_id: 'mindsharp.pro.yearly'
     });
     const serialised = JSON.stringify(out);
-    for (const leak of ['cus_123', 'sub_456', 'SECRET-KEY-0001', 'uuid']) {
+    for (const leak of ['cus_123', 'sub_456', 'SECRET-KEY-0001', 'uuid', '200000123456789']) {
       assert.equal(serialised.includes(leak), false, `${leak} must not reach the client`);
     }
   });

@@ -17,7 +17,7 @@ export const S = {
   stats: null, meter: null,
   // server-backed, filled by entitlement.js / auth.js
   authed: false, user: null, plan: 'free', planStatus: 'none',
-  currentPeriodEnd: null, cancelAtPeriodEnd: false,
+  currentPeriodEnd: null, cancelAtPeriodEnd: false, source: null,
   serverLimits: null,
   // drill run context, filled by drills.js
   drill: null, attempts: []
@@ -89,6 +89,7 @@ export function setPro(ent) {
   S.planStatus = (ent && ent.status) || 'none';
   S.currentPeriodEnd = (ent && ent.currentPeriodEnd) || null;
   S.cancelAtPeriodEnd = !!(ent && ent.cancelAtPeriodEnd);
+  S.source = (ent && ent.source) || null;
   if (!S.pro && S.difficulty === 'expert') { S.difficulty = 'hard'; savePrefs(); }
 }
 

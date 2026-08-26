@@ -12,7 +12,8 @@ import {
 import { recordAttempt, submitRun, flush, initRunLog, setProgressSink } from './runlog.js';
 import { initProgress, refreshProgress, progressView, renderXpPanel, openProfile, closeProfile } from './progress.js';
 import { initDrills, startDrill, onResults } from './drills.js';
-import { openPaywall, closePaywall, openReward, closeReward, startCheckout, watchReward, devPreviewPro, tryLicence, resumeAfterCheckout } from './paywall.js';
+import { openPaywall, closePaywall, openReward, closeReward, startCheckout, watchReward, devPreviewPro, tryLicence, resumeAfterCheckout, restorePurchases } from './paywall.js';
+import { initBilling, applyLocalPrices } from './billing.js';
 import { initAuth, openAuthSheet, closeAuthSheet, submitAuthSheet, onAuthChange } from './auth.js';
 import { openAccount, closeAccount, openPortal, doSignOut } from './account.js';
 import { openSocial, closeSocial, setTab, saveHandle, socialSignIn } from './social.js';
@@ -183,6 +184,7 @@ function bind() {
   $$('#plans .plan').forEach(p => p.addEventListener('click', () => startCheckout(p.dataset.plan)));
   $('#lic-btn').addEventListener('click', tryLicence);
   $('#lic-input').addEventListener('keydown', e => { if (e.key === 'Enter') tryLicence(); });
+  $('#pw-restore').addEventListener('click', restorePurchases);
   $('#pw-demo').addEventListener('click', devPreviewPro);
 
   // reward sheet
@@ -196,6 +198,7 @@ function bind() {
   // Android back, and deep links from the native shell.
   window.addEventListener('ms:go-menu', () => { setScreen('menu'); renderMenu(); });
   window.addEventListener('ms:launch-intent', e => launchMode(e.detail?.go));
+  window.addEventListener('ms:purchase-verified', () => { renderMenu(); closePaywall(); });
   // Coming back from the background is usually a new day: re-check the streak
   // and drain anything the offline queue is holding.
   window.addEventListener('ms:resumed', async () => {
@@ -308,6 +311,10 @@ async function init() {
 
   await initNative();
   await initNotifications();
+  // Store prices are localised by the store itself, so an Indian buyer
+  // sees rupees rather than a dollar figure they get charged a
+  // converted amount for.
+  initBilling().then(okBilling => { if (okBilling) { applyLocalPrices(); renderMenu(); } });
 
   await loadAll();
   await initProgress();
