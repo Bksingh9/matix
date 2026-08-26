@@ -10,7 +10,7 @@ import { join, extname, dirname, resolve, relative } from 'node:path';
 import { execFileSync } from 'node:child_process';
 
 const ROOT = resolve(new URL('..', import.meta.url).pathname);
-const SKIP = new Set(['node_modules', '.git', '.vercel', 'reference', 'coverage']);
+const SKIP = new Set(['node_modules', '.git', '.vercel', 'reference', 'coverage', 'android', 'ios', 'store']);
 const ID = '[A-Za-z_$][A-Za-z0-9_$]*';
 
 function walk(dir, out = []) {

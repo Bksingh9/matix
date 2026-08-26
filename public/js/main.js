@@ -1,5 +1,5 @@
 import { S, loadAll, savePrefs, DEF_STATS, DEF_METER, canRun, runsLeft } from './state.js';
-import { K, sdel } from './store.js';
+import { K, sdel, useNativeStorage } from './store.js';
 import { track, initAnalytics } from './analytics.js';
 import { $, $$, cap1 } from './util.js';
 import { audio } from './audio.js';
@@ -17,6 +17,7 @@ import { initAuth, openAuthSheet, closeAuthSheet, submitAuthSheet, onAuthChange 
 import { openAccount, closeAccount, openPortal, doSignOut } from './account.js';
 import { openSocial, closeSocial, setTab, saveHandle, socialSignIn } from './social.js';
 import { initInstall, noteRunFinished, acceptInstall, dismissInstall } from './install.js';
+import { initNative, nativeStorage, isNative } from './native.js';
 import { refreshEntitlement, migrateLocalProgress } from './entitlement.js';
 
 /* ============================================================ BINDINGS
@@ -182,6 +183,19 @@ function bind() {
   $('#rw-pro').addEventListener('click', () => { closeReward(); openPaywall('Unlimited runs, no ads, and the weak-spot report.', 'reward_sheet'); });
 
   document.addEventListener('keydown', onKey);
+
+  // Android back, and deep links from the native shell.
+  window.addEventListener('ms:go-menu', () => { setScreen('menu'); renderMenu(); });
+  window.addEventListener('ms:launch-intent', e => launchMode(e.detail?.go));
+  // Coming back from the background is usually a new day: re-check the streak
+  // and drain anything the offline queue is holding.
+  window.addEventListener('ms:resumed', async () => {
+    flush();
+    await refreshEntitlement({ force: true });
+    await refreshProgress();
+    syncChips();
+    renderMenu();
+  });
 }
 
 function onKey(e) {
@@ -225,6 +239,11 @@ function handleLaunchIntent() {
   const go = new URLSearchParams(location.search).get('go');
   if (!go) return;
   history.replaceState(null, '', location.pathname);
+  launchMode(go);
+}
+
+function launchMode(go) {
+  if (!go) return;
   if (go === 'daily') { audio(); startRun('daily', true); return; }
   // hasOwnProperty, not a bare lookup: GAMES['__proto__'] is Object.prototype,
   // which is truthy and would start a run with no generator behind it.
@@ -247,6 +266,11 @@ async function init() {
   // decided by the server and S.pro is only a mirror of what /api/me said.
   window.__mindsharp.S = S;
 
+  // Adopt native storage before anything reads: a WKWebView can evict
+  // localStorage, and a streak read from the wrong backend reads as broken.
+  const ns = nativeStorage();
+  if (ns) useNativeStorage(ns);
+
   initAnalytics();
   bind();
   initInstall();
@@ -264,6 +288,8 @@ async function init() {
   S.meter = DEF_METER();
   renderMenu();
   requestAnimationFrame(loop);
+
+  await initNative();
 
   await loadAll();
   await initProgress();
@@ -288,7 +314,7 @@ async function init() {
   syncChips();
   renderMenu();
 
-  track('app_open', { pro: S.pro, authed: S.authed, runsLeft: S.pro ? 'inf' : runsLeft() });
+  track('app_open', { pro: S.pro, authed: S.authed, native: isNative(), runsLeft: S.pro ? 'inf' : runsLeft() });
   // Signals "startup finished, entitlement resolved" — used by the e2e suite
   // so tests never race the /api/me round-trip.
   window.__mindsharp.booted = true;

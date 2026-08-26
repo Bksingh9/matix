@@ -11,7 +11,7 @@
  *     Entitlement is server-authoritative, and a cache is a second opinion.
  */
 
-const VERSION = 'v8';
+const VERSION = 'v9';
 const SHELL = `mindsharp-shell-${VERSION}`;
 const RUNTIME = `mindsharp-runtime-${VERSION}`;
 
@@ -44,7 +44,8 @@ const SHELL_URLS = [
   '/js/progress.js',
   '/js/progression.js',
   '/js/social.js',
-  '/js/install.js'
+  '/js/install.js',
+  '/js/native.js'
 ];
 
 self.addEventListener('install', event => {

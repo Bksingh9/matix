@@ -1,6 +1,7 @@
 import { S, saveStats, saveMeter, canRun } from './state.js';
 import { GAMES, generate, diff, seedFromDate, useSystemRandom } from './games.js';
 import { audio, beep } from './audio.js';
+import { tap } from './native.js';
 import { track } from './analytics.js';
 import { $, now, today, yesterday, OPSYM, fmt } from './util.js';
 import { openPaywall, openReward } from './paywall.js';
@@ -167,7 +168,7 @@ function good(t, given) {
   S.score += pts;
   tally(true);
   logAttempt({ correct: true, timedOut: false, elapsedMs: Math.round(t * 1000), given });
-  beep('ok'); flashGood(pts); updScore(); updStreak(); updCenter(); updBar();
+  beep('ok'); tap('light'); flashGood(pts); updScore(); updStreak(); updCenter(); updBar();
   if (S.isDaily && S.solved >= GAMES.daily.total) { setTimeout(() => endRun('done'), 380); return; }
   setTimeout(nextProblem, 240);
 }
@@ -177,7 +178,7 @@ function bad(show, t, given) {
   updStreak();
   tally(false);
   logAttempt({ correct: false, timedOut: false, elapsedMs: Math.round((t || 0) * 1000), given });
-  beep('no'); flashBad(show);
+  beep('no'); tap('error'); flashBad(show);
   if (S.isDaily) {
     if (S.solved >= GAMES.daily.total) { setTimeout(() => endRun('done'), 800); return; }
     setTimeout(nextProblem, 700);
@@ -198,7 +199,7 @@ function timeoutProblem() {
   tally(false);
   logAttempt({ correct: false, timedOut: true, elapsedMs: Math.round(S.pLimit * 1000), given: null });
   S.lives--;
-  updCenter(); beep('no');
+  updCenter(); beep('no'); tap('error');
   flashBad(S.problem.kind === 'recall' ? S.problem.digits : String(S.problem.answer), 'Time');
   setTimeout(() => { if (S.lives <= 0) endRun('dead'); else nextProblem(); }, 820);
 }

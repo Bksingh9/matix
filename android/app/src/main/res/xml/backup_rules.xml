@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android Auto Backup. Preferences hold the streak and local progress, so
+     they are worth restoring to a new device. WebView caches are not. -->
+<full-backup-content>
+    <include domain="sharedpref" path="."/>
+    <exclude domain="sharedpref" path="WebViewChromiumPrefs.xml"/>
+    <exclude domain="database" path="."/>
+    <exclude domain="file" path="app_webview"/>
+</full-backup-content>

@@ -1,0 +1,43 @@
+{
+  "appId": "app.mindsharp.game",
+  "appName": "MindSharp",
+  "webDir": "public",
+  "bundledWebRuntime": false,
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true,
+    "webContentsDebuggingEnabled": false
+  },
+  "ios": {
+    "contentInset": "never",
+    "scrollEnabled": false,
+    "limitsNavigationsToAppBoundDomains": true
+  },
+  "server": {
+    "androidScheme": "https",
+    "iosScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 600,
+      "launchAutoHide": true,
+      "backgroundColor": "#16120c",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false,
+      "splashFullScreen": true,
+      "splashImmersive": true
+    },
+    "StatusBar": {
+      "style": "DARK",
+      "backgroundColor": "#16120c",
+      "overlaysWebView": false
+    },
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_mindsharp",
+      "iconColor": "#ffb43a"
+    },
+    "Keyboard": {
+      "resize": "none"
+    }
+  }
+}

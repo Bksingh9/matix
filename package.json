@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "MindSharp — mental-arithmetic fitness tracker. Vanilla JS frontend + Vercel serverless functions + Supabase.",
+  "description": "MindSharp \u2014 mental-arithmetic fitness tracker. Vanilla JS frontend + Vercel serverless functions + Supabase.",
   "engines": {
     "node": ">=20"
   },
@@ -18,12 +18,31 @@
     "verify": "npm run check && npm run e2e",
     "build": "npm run check:secrets && npm run check:prod",
     "verify:rls": "node scripts/verify-rls.mjs",
-    "check:events": "node scripts/check-events.mjs"
+    "check:events": "node scripts/check-events.mjs",
+    "assets:native": "npx capacitor-assets generate --iconBackgroundColor '#16120c' --iconBackgroundColorDark '#16120c' --splashBackgroundColor '#16120c' --splashBackgroundColorDark '#16120c' && node scripts/make-icons.mjs && node scripts/fix-manifest.mjs",
+    "icons": "node scripts/make-icons.mjs",
+    "cap:sync": "npx cap sync",
+    "android": "npx cap sync android && npx cap open android",
+    "ios": "npx cap sync ios && npx cap open ios",
+    "android:build": "npx cap sync android && cd android && ./gradlew assembleRelease",
+    "android:bundle": "npx cap sync android && cd android && ./gradlew bundleRelease"
   },
   "dependencies": {
+    "@capacitor/app": "^6.0.3",
+    "@capacitor/core": "^6.2.1",
+    "@capacitor/haptics": "^6.0.3",
+    "@capacitor/local-notifications": "^6.1.3",
+    "@capacitor/preferences": "^6.0.4",
+    "@capacitor/push-notifications": "^6.0.5",
+    "@capacitor/splash-screen": "^6.0.4",
+    "@capacitor/status-bar": "^6.0.3",
     "@supabase/supabase-js": "^2.45.0"
   },
   "devDependencies": {
+    "@capacitor/android": "^6.2.1",
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^6.2.1",
+    "@capacitor/ios": "^6.2.1",
     "playwright": "^1.47.0"
   }
 }

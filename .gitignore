@@ -3,6 +3,23 @@ node_modules/
 .env
 .env.local
 .env.*.local
-.DS_Store
 *.log
-coverage/
+
+# Capacitor build output. The native project sources ARE committed (they carry
+# manifest edits, icons and signing config); their build artefacts are not.
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+android/app/src/main/assets/public/
+android/app/src/main/res/xml/config.xml
+ios/App/build/
+ios/App/Pods/
+ios/App/App/public/
+ios/App/Podfile.lock
+ios/App/output/
+DerivedData/
+*.xcuserstate
+*.xcuserdatad/
+
+.DS_Store
