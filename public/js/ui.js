@@ -44,7 +44,8 @@ export function renderMenu() {
   $('#s-days').textContent = fmt(st.days.length);
 
   $('#daily-date').textContent = new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  $('#daily-streak').textContent = 'Day streak: ' + (m.dayStreak || 0);
+  const dstreak = chipData.streak?.dayStreak ?? m.dayStreak ?? 0;
+  $('#daily-streak').textContent = dstreak ? 'Day streak: ' + dstreak : 'Start a streak today';
   const dc = $('#daily-card');
   if (m.dailyDone) { dc.classList.add('done'); $('#daily-h').textContent = 'Today: ' + fmt(m.dailyScore); $('#daily-go').textContent = 'See result'; }
   else { dc.classList.remove('done'); $('#daily-h').textContent = "Today's twelve"; $('#daily-go').textContent = 'Play today'; }
@@ -57,6 +58,8 @@ export function renderMenu() {
       + '<div class="gc-name">' + g.name + '</div><div class="gc-desc">' + g.desc + '</div></button>';
   }).join('');
 
+  renderProgressChips();
+
   $$('#ops .op-chip').forEach(c => c.classList.toggle('on', S.ops.indexOf(c.dataset.op) >= 0));
   $$('#diff button').forEach(b => b.classList.toggle('on', b.dataset.diff === S.difficulty));
   $('#toggle-auto').classList.toggle('on', S.autoSubmit);
@@ -64,8 +67,33 @@ export function renderMenu() {
   $('#menu-diff-hint').textContent = cap1(S.difficulty);
 }
 
+/* Level and streak chips. The streak is the reason a player opens the app on a
+   day they don't feel like it, so it gets the most prominent state in the bar:
+   amber when at risk, red and pulsing when the day is nearly gone.
+
+   Fed by main.js, which owns the progression module — ui.js stays a renderer. */
+let chipData = { level: 1, streak: null };
+export function setChipData(d) { chipData = { ...chipData, ...d }; renderProgressChips(); }
+
+export function renderProgressChips() {
+  const lvl = $('#level-num');
+  if (lvl) lvl.textContent = String(chipData.level ?? 1);
+
+  const chip = $('#streak-chip');
+  if (!chip) return;
+  const st = chipData.streak;
+  if (!st || !st.dayStreak) { chip.style.display = 'none'; return; }
+  chip.style.display = '';
+  chip.className = 'streak-chip ' + (st.status || '');
+  chip.innerHTML = '<span>' + (st.status === 'frozen' ? '❄' : '🔥') + '</span><span>' + st.dayStreak + '</span>';
+  chip.title = st.status === 'urgent' ? 'Play today or you lose your streak'
+    : st.status === 'at_risk' ? 'Play today to keep your streak'
+      : st.status === 'frozen' ? 'A streak freeze is holding this'
+        : st.dayStreak + '-day streak';
+}
+
 /* Auth strip in the top bar. Signed out shows "Sign in"; signed in shows the
-   email and a sign-out link. */
+   account chip. */
 export function renderAuth() {
   const el = $('#auth-strip');
   if (!el) return;
@@ -169,6 +197,8 @@ export function renderResults(r) {
   $('#r-score').textContent = fmt(S.score);
   $('#r-newbest').classList.toggle('show', !!r.isBest);
   $('#r-grid').textContent = S.isDaily ? gridString() : '';
+  const xp = $('#r-xp');
+  if (xp) { xp.classList.remove('show'); xp.innerHTML = ''; }
 
   const rows = S.solved ? [
     { k: 'Correct', v: S.correct + '/' + S.solved }, { k: 'Accuracy', v: r.acc + '%' },

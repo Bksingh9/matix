@@ -3,12 +3,13 @@ import { K, sdel } from './store.js';
 import { track, initAnalytics } from './analytics.js';
 import { $, $$, cap1 } from './util.js';
 import { audio } from './audio.js';
-import { setScreen, renderMenu, syncSound, updAnswer } from './ui.js';
+import { setScreen, renderMenu, syncSound, updAnswer, setChipData } from './ui.js';
 import {
   gateGame, startRun, endRun, submitPad, submitTF, submitOp,
   chipTap, digit, loop, share, setAttemptSink, setRunSink, setResultsHook
 } from './engine.js';
-import { recordAttempt, submitRun, flush, initRunLog } from './runlog.js';
+import { recordAttempt, submitRun, flush, initRunLog, setProgressSink } from './runlog.js';
+import { initProgress, refreshProgress, progressView, renderXpPanel, openProfile, closeProfile } from './progress.js';
 import { initDrills, startDrill, onResults } from './drills.js';
 import { openPaywall, closePaywall, openReward, closeReward, startCheckout, watchReward, devPreviewPro, tryLicence, resumeAfterCheckout } from './paywall.js';
 import { initAuth, openAuthSheet, closeAuthSheet, submitAuthSheet, onAuthChange } from './auth.js';
@@ -25,6 +26,11 @@ function bind() {
   // The Pro badge is the way in to cancelling, so it has to be a button.
   $('#pro-badge').addEventListener('click', () => openAccount('badge'));
   $('#daily-card').addEventListener('click', () => { audio(); startRun('daily', true); });
+
+  $('#level-chip').addEventListener('click', () => openProfile('level_chip'));
+  $('#streak-chip').addEventListener('click', () => openProfile('streak_chip'));
+  $('#prof-x').addEventListener('click', closeProfile);
+  $('#profm').addEventListener('click', e => { if (e.target.id === 'profm') closeProfile(); });
 
   $('#acct-x').addEventListener('click', closeAccount);
   $('#acctm').addEventListener('click', e => { if (e.target.id === 'acctm') closeAccount(); });
@@ -155,8 +161,8 @@ function bind() {
 }
 
 function onKey(e) {
-  if (['#paywall', '#rewardm', '#authm', '#acctm'].some(id => $(id).classList.contains('show'))) {
-    if (e.key === 'Escape') { closePaywall(); closeReward(); closeAuthSheet(); closeAccount(); }
+  if (['#paywall', '#rewardm', '#authm', '#acctm', '#profm'].some(id => $(id).classList.contains('show'))) {
+    if (e.key === 'Escape') { closePaywall(); closeReward(); closeAuthSheet(); closeAccount(); closeProfile(); }
     return;
   }
   if (S.screen === 'game') {
@@ -190,6 +196,12 @@ function onKey(e) {
   }
 }
 
+/* Push the current progression into the top-bar chips. */
+function syncChips() {
+  const p = progressView();
+  setChipData({ level: p?.level?.level ?? 1, streak: p?.streak ?? null });
+}
+
 /* ============================================================ INIT */
 async function init() {
   // Debug/test handle. Exposing state grants nothing: from Phase 1 on, Pro is
@@ -204,6 +216,7 @@ async function init() {
   setAttemptSink(recordAttempt);
   setRunSink(submitRun);
   setResultsHook(onResults);
+  setProgressSink(p => { renderXpPanel(p); syncChips(); });
   initRunLog();
   initDrills();
 
@@ -213,6 +226,8 @@ async function init() {
   requestAnimationFrame(loop);
 
   await loadAll();
+  await initProgress();
+  syncChips();
   renderMenu();
   syncSound();
 
@@ -221,12 +236,16 @@ async function init() {
   onAuthChange(async sess => {
     await refreshEntitlement({ force: true });
     if (sess) { await migrateLocalProgress(); flush(); }
+    await refreshProgress();
+    syncChips();
     renderMenu();
   });
 
   await initAuth();
   await refreshEntitlement({ force: true });
   if (S.authed) { await migrateLocalProgress(); flush(); }
+  await refreshProgress();
+  syncChips();
   renderMenu();
 
   track('app_open', { pro: S.pro, authed: S.authed, runsLeft: S.pro ? 'inf' : runsLeft() });

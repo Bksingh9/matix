@@ -2,6 +2,12 @@ import { S } from './state.js';
 import { K, sget, sset } from './store.js';
 import { track } from './analytics.js';
 import * as api from './api.js';
+import { applyLocalRun, applyServerProgress, refreshProgress } from './progress.js';
+
+const localShapeOf = p => ({
+  game: p.game, isDaily: !!p.isDaily, solved: p.solved, correct: p.correct,
+  bestStreak: p.bestStreak, durationMs: p.durationMs, attempts: p.attempts || []
+});
 
 /* Collects attempts during a run and ships them at the end.
  *
@@ -52,9 +58,28 @@ const numOrNull = x => {
 /* ---- submission ---------------------------------------------------------- */
 
 /* Called by the engine at the end of a run. Never throws and never blocks the
-   results screen: a failed upload is a queued upload, not a lost run. */
+   results screen: a failed upload is a queued upload, not a lost run.
+
+   Progression is applied either way — by the server for a signed-in player,
+   locally for an anonymous one. Gating the streak and the level behind sign-in
+   would mean the retention mechanic only starts working after the moment it
+   exists to survive. */
 export async function submitRun({ acc, durationMs }) {
-  if (!S.authed) return { queued: false, reason: 'anonymous' };
+  const runShape = {
+    game: S.isDaily ? 'daily' : S.game,
+    isDaily: !!S.isDaily,
+    solved: S.solved,
+    correct: S.correct,
+    bestStreak: S.bestStreak,
+    durationMs: Math.max(0, Math.round(durationMs || 0)),
+    attempts: S.attempts || []
+  };
+
+  if (!S.authed) {
+    // Local progression, then hand it to the results screen.
+    try { onProgress(applyLocalRun(runShape)); } catch (e) { console.warn('[runlog] local progression failed:', e); }
+    return { queued: false, reason: 'anonymous' };
+  }
 
   const payload = {
     game: S.isDaily ? 'daily' : S.game,
@@ -76,9 +101,17 @@ export async function submitRun({ acc, durationMs }) {
   return send(payload);
 }
 
+/* The results screen needs the progression delta. Registered by main.js so
+   runlog.js does not import the renderer. */
+let progressSink = null;
+export const setProgressSink = fn => { progressSink = fn; };
+const onProgress = p => { if (p && progressSink) { try { progressSink(p); } catch (e) { /* cosmetic */ } } };
+
 async function send(payload) {
   try {
     const r = await api.post('/api/runs', payload);
+    // The server owns XP for a signed-in player, so its numbers land here.
+    if (r?.progress) { applyServerProgress(r.progress); onProgress(r.progress); }
     flush();               // a working connection: drain anything queued
     return { sent: true, runId: r?.runId ?? null };
   } catch (e) {
@@ -90,6 +123,9 @@ async function send(payload) {
       track('run_rejected', { code: e.code });
       return { sent: false, reason: e.code };
     }
+    // Offline: award progression locally now so the player still sees the
+    // streak tick over, and reconcile from /api/progress when we reconnect.
+    try { onProgress(applyLocalRun(localShapeOf(payload))); } catch (err) { /* non-fatal */ }
     await enqueue(payload);
     return { sent: false, queued: true };
   }
@@ -149,6 +185,6 @@ export async function queueSize() {
 
 /* Retry whenever connectivity returns, and once on startup. */
 export function initRunLog() {
-  window.addEventListener('online', () => { flush(); });
+  window.addEventListener('online', () => { flush().then(r => { if (r?.flushed) refreshProgress(); }); });
   document.addEventListener('visibilitychange', () => { if (!document.hidden) flush(); });
 }

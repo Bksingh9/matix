@@ -11,7 +11,9 @@ export const K = {
   meter: 'mindsharp:meter',
   ent: 'mindsharp:entitlement',
   queue: 'mindsharp:runqueue',
-  migrated: 'mindsharp:migrated'
+  migrated: 'mindsharp:migrated',
+  progress: 'mindsharp:progress',
+  install: 'mindsharp:install'
 };
 
 const mem = new Map();

@@ -275,6 +275,14 @@ export function endRun(reason) {
     track('daily_end', { score: S.score, acc, streak: S.meter.dayStreak });
   } else track('game_end', { game: S.game, score: S.score, acc, solved: S.solved, reason, pro: S.pro });
 
+  // Render first, then report the run.
+  //
+  // renderResults clears the XP panel, and the progression sink fills it. For
+  // an anonymous player the sink runs synchronously — no network — so calling
+  // runSink first would fill the panel and then have renderResults wipe it.
+  renderResults({ reason, acc, avg, perMin, isBest });
+  setScreen('results');
+
   // Never block or break the results screen over an upload.
   if (runSink) {
     try {
@@ -282,9 +290,6 @@ export function endRun(reason) {
       if (p && typeof p.catch === 'function') p.catch(() => { });
     } catch (e) { /* ignore */ }
   }
-
-  renderResults({ reason, acc, avg, perMin, isBest });
-  setScreen('results');
   if (resultsHook) { try { resultsHook({ reason, acc, avg, perMin, isBest }); } catch (e) { } }
 }
 

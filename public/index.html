@@ -18,6 +18,8 @@
     <div class="topbar">
       <div class="logo"><span class="wm">MIND<span class="sh">SHARP</span></span></div>
       <div class="tb-right">
+        <button class="streak-chip" id="streak-chip" style="display:none;" aria-label="Your streak"></button>
+        <button class="level-chip" id="level-chip" aria-label="Your profile"><span id="level-num">1</span></button>
         <span class="auth-strip" id="auth-strip"></span>
         <span class="runs-pill" id="runs-pill"><b>5</b> runs left</span>
         <button class="pro-btn" id="pro-cta">Get Pro</button>
@@ -123,6 +125,7 @@
     <span id="r-newbest">New best</span>
     <div id="r-grid"></div>
     <div id="r-stats"></div>
+    <div class="r-xp" id="r-xp"></div>
     <div class="r-locked" id="r-locked"></div>
     <div class="r-trend"><span class="rk">Recent scores · this game</span><div id="r-spark"></div></div>
     <div class="r-actions">
@@ -224,6 +227,17 @@
       <a href="/legal/terms" target="_blank" rel="noopener">Terms</a> ·
       <a href="/legal/privacy" target="_blank" rel="noopener">Privacy</a>
     </div>
+  </div>
+</div>
+
+<div id="toasts" aria-live="polite"></div>
+
+<!-- ==================== PROFILE ==================== -->
+<div class="modal" id="profm">
+  <div class="sheet">
+    <button class="sheet-x" id="prof-x" aria-label="Close">✕</button>
+    <h3>Your progress</h3>
+    <div id="prof-body"><div class="lk-p">Loading…</div></div>
   </div>
 </div>
 

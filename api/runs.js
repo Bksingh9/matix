@@ -3,6 +3,8 @@ import { userFromRequest } from '../lib/auth.js';
 import { guard } from '../lib/ratelimit.js';
 import { supabaseAdmin } from '../lib/supabase.js';
 import { bandOf } from '../lib/weakness.js';
+import { resolveEntitlement } from '../lib/entitlement.js';
+import { applyRun } from '../lib/progress-store.js';
 
 /* POST /api/runs — persist a finished run and its attempts in one transaction.
  *
@@ -98,7 +100,29 @@ export default async function handler(req, res) {
       if (dErr) console.error('[runs] drill completion failed:', dErr.message);
     }
 
-    return ok(res, { runId, accepted: true, attempts: rows.length, ...(suspicious ? { flagged: 'timing' } : {}) });
+    // Progression: XP, level, streak, achievements. The single most important
+    // part of the response for retention — it is what the results screen turns
+    // into a reason to play again tomorrow.
+    //
+    // An 'import' backfill is deliberately excluded: awarding a level 20 for
+    // migrating local history would hand out every volume achievement at once
+    // and make the whole arc meaningless.
+    let progress = null;
+    if (run.game !== 'import') {
+      try {
+        const ent = await resolveEntitlement(user.id);
+        progress = await applyRun(user.id, run, { attempts: rows, isPro: ent.isPro });
+      } catch (e) {
+        // A run is worth more than its XP. Persist it either way and log.
+        console.error('[runs] progression failed:', e);
+      }
+    }
+
+    return ok(res, {
+      runId, accepted: true, attempts: rows.length,
+      ...(progress ? { progress } : {}),
+      ...(suspicious ? { flagged: 'timing' } : {})
+    });
   } catch (e) {
     const ref = errorRef();
     console.error(`[runs:${ref}]`, e);

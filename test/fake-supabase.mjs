@@ -17,6 +17,7 @@ export async function fakeSupabase(seed = {}) {
     ...seed
   };
   const requests = [];
+  const failing = new Set();
 
   const server = http.createServer(async (req, res) => {
     const url = new URL(req.url, 'http://localhost');
@@ -63,6 +64,9 @@ export async function fakeSupabase(seed = {}) {
     const m = url.pathname.match(/^\/rest\/v1\/([\w.]+)$/);
     if (!m) return send(res, 404, { message: 'not found' });
     const name = m[1];
+    // Injected failure, for testing what happens when one table is unreachable.
+    // A thrown exception here would hang the request instead of answering it.
+    if (failing.has(name)) return send(res, 500, { code: 'XX000', message: `${name} is unavailable` });
     const rows = tables[name] || (tables[name] = []);
     const prefer = String(req.headers.prefer || '');
     const wantsObject = String(req.headers.accept || '').includes('vnd.pgrst.object+json');
@@ -128,6 +132,8 @@ export async function fakeSupabase(seed = {}) {
     url: `http://127.0.0.1:${server.address().port}`,
     tables,
     requests,
+    fail: name => failing.add(name),
+    unfail: name => failing.delete(name),
     close: () => new Promise(r => server.close(r))
   };
 }
