@@ -18,6 +18,7 @@
     "verify": "npm run check && npm run e2e",
     "build": "npm run check:secrets && npm run check:prod",
     "verify:rls": "node scripts/verify-rls.mjs",
+    "verify:sql": "node scripts/verify-sql.mjs",
     "check:events": "node scripts/check-events.mjs",
     "assets:native": "npx capacitor-assets generate --iconBackgroundColor '#16120c' --iconBackgroundColorDark '#16120c' --splashBackgroundColor '#16120c' --splashBackgroundColorDark '#16120c' && node scripts/make-icons.mjs && node scripts/fix-manifest.mjs",
     "icons": "node scripts/make-icons.mjs",
