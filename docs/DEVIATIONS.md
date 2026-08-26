@@ -212,3 +212,11 @@ test said so.
 - `POST /api/account/delete` swallowed a failed entitlement read, so an
   unreachable table read as "no subscription" and the account was deleted
   anyway (§11 above).
+- **The Android project did not compile at all.** Phase 12 added
+  `com.android.billingclient:billing:9.0.0`, which pulls `androidx.core:1.15.0`
+  and requires `compileSdk 35`; the Gradle config written in phase 10 pinned
+  `compileSdk 34` on AGP 8.2.1, whose ceiling is 34. Nothing caught it because
+  nothing had ever run `gradlew`. Fixed by moving to compileSdk/targetSdk 35,
+  AGP 8.7.3 and Gradle 8.9 — and by adding `npm run verify:android`, so the
+  next such break is a failing command rather than a discovery at submission
+  time.

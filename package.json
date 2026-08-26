@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "MindSharp — mental-arithmetic fitness tracker. Vanilla JS frontend + Vercel serverless functions + Supabase.",
+  "description": "MindSharp \u2014 mental-arithmetic fitness tracker. Vanilla JS frontend + Vercel serverless functions + Supabase.",
   "engines": {
     "node": ">=20"
   },
@@ -19,6 +19,7 @@
     "build": "npm run check:secrets && npm run check:prod",
     "verify:rls": "node scripts/verify-rls.mjs",
     "verify:sql": "node scripts/verify-sql.mjs",
+    "verify:android": "node scripts/verify-android.mjs",
     "check:events": "node scripts/check-events.mjs",
     "assets:native": "npx capacitor-assets generate --iconBackgroundColor '#16120c' --iconBackgroundColorDark '#16120c' --splashBackgroundColor '#16120c' --splashBackgroundColorDark '#16120c' && node scripts/make-icons.mjs && node scripts/fix-manifest.mjs",
     "icons": "node scripts/make-icons.mjs",

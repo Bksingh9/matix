@@ -48,9 +48,40 @@ notification icon and (later) your signing config.
 npm run cap:sync          # copy public/ into both platforms
 npm run android           # sync + open Android Studio
 npm run ios               # sync + open Xcode
+npm run verify:android    # sync + compile, no IDE needed
 ```
 
 `cap sync` must be run after any change under `public/`. Nothing watches.
+
+`verify:android` is the one that matters in CI. The Android project shipped
+for two phases in a state that could not build at all — phase 12 added the Play
+Billing client, which needs `compileSdk 35` and `minSdk 23`, while the Gradle
+config from phase 10 pinned 34 and 22. Nothing caught it because nothing had
+ever run `gradlew`; a committed, configured Android project reads as a working
+one right up until you try. Set `ANDROID_HOME` and it compiles for real.
+
+## Version floor, and why it is where it is
+
+| Setting | Value | Forced by |
+|---|---|---|
+| `minSdkVersion` | 23 | `com.android.billingclient:billing:9.0.0` |
+| `compileSdkVersion` | 35 | the same, via `androidx.core:1.15.0` |
+| `targetSdkVersion` | 35 | matches compile; see the caveat below |
+| Android Gradle Plugin | 8.7.3 | 8.2.1 cannot compile against 35 |
+| Gradle | 8.9 | required by AGP 8.7.3 |
+
+The manifest merger offers `tools:overrideLibrary` to force a lower `minSdk`.
+Do not take it for the billing library — it is documented as risking runtime
+failures, and the thing that would fail is taking money.
+
+minSdk 23 is Android 6.0. The devices this drops relative to 22 round to
+nothing, and none of them can run Play Billing 9 anyway.
+
+**Check Play's current target-API requirement before you submit.** Google
+raises the minimum annually, so `targetSdkVersion = 35` may already be below
+it. Now that the build is proven, moving it is a one-line change in
+`android/variables.gradle` — but re-run `npm run verify:android` afterwards,
+because that is exactly the kind of edit that used to go unverified.
 
 ## Regenerating icons and splash screens
 
