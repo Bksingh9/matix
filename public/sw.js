@@ -11,7 +11,7 @@
  *     Entitlement is server-authoritative, and a cache is a second opinion.
  */
 
-const VERSION = 'v11';
+const VERSION = 'v12';
 const SHELL = `mindsharp-shell-${VERSION}`;
 const RUNTIME = `mindsharp-runtime-${VERSION}`;
 

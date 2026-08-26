@@ -241,11 +241,22 @@
       <button class="btn-ghost" id="acct-signout">Sign out</button>
     </div>
     <div class="plan-note" style="margin-top:16px;">
-      Billing is handled by Lemon Squeezy, our merchant of record. Cancelling stops the next
-      renewal and keeps your access until the paid period ends.
+      <span id="acct-billing-note">Billing is handled by Lemon Squeezy, our merchant of record.
+      Cancelling stops the next renewal and keeps your access until the paid period ends.</span>
       <a href="/legal/refunds" target="_blank" rel="noopener">Refunds</a> ·
       <a href="/legal/terms" target="_blank" rel="noopener">Terms</a> ·
       <a href="/legal/privacy" target="_blank" rel="noopener">Privacy</a>
+    </div>
+    <div class="danger-zone" id="acct-danger">
+      <button class="linkish danger" id="acct-delete">Delete my account</button>
+      <div id="acct-delete-confirm" style="display:none;">
+        <p class="sub">This erases your runs, answer history, XP, streak and achievements. It
+        cannot be undone, and support cannot bring it back.</p>
+        <div class="r-actions">
+          <button class="btn-ghost danger" id="acct-delete-yes">Yes, delete everything</button>
+          <button class="btn-ghost" id="acct-delete-no">Keep my account</button>
+        </div>
+      </div>
     </div>
   </div>
 </div>

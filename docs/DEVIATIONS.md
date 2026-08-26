@@ -144,6 +144,7 @@ self-defeating. `v_runs_today` excludes `is_daily`, `drill` and `import`.
 | `public/js/account.js` | The account sheet and the cancel path Phase 6 requires. |
 | `api/config.js` | The client is unbundled with no build step, so there is nowhere to inject the Supabase URL and anon key at compile time. This hands over the public values at runtime. |
 | `api/portal.js` | The Lemon Squeezy customer portal link — the cancel half of Phase 6's acceptance criterion. |
+| `api/account/delete.js` | In-app account deletion, required by App Store guideline 5.1.1(v) and Play policy once the store builds exist. See §11. |
 | `lib/http.js`, `lib/buckets.js`, `lib/drillgen.js` | Shared plumbing, view reads, and problem generation, kept out of the route handlers. |
 
 ## 10. The dev Pro preview cannot grant Pro
@@ -153,6 +154,44 @@ from production. Since Phase 1, no client code *can* grant Pro — the button
 would have nothing to do. It now prints the SQL to grant yourself a comp
 entitlement instead, which is the only route that works. `devMode` is `false`
 and `npm run check:prod` fails a production build that flips it back.
+
+---
+
+## 11. Account deletion, which the spec never asked for
+
+Nothing in the build spec mentions deleting an account, and on the web nothing
+requires it. Shipping to the App Store does: guideline 5.1.1(v) requires any
+app offering account creation to offer in-app deletion, and Play has an
+equivalent data-deletion policy. `docs/MOBILE.md` had asserted the feature
+existed before it did — a claim that would have cost a review cycle to
+discover.
+
+The interesting part is not the deletion, which is one `auth.users` row and a
+cascade. It is the three ways deleting an account can leave someone worse off:
+
+- **A live App Store or Play subscription.** We cannot cancel it; only the
+  store can. Deleting the account leaves a card being charged for a product
+  with no account behind it, which is a chargeback and a one-star review. So
+  deletion is **refused** with the store named, rather than silently accepted.
+- **A live Lemon Squeezy subscription.** Here we do have the authority, so it
+  is cancelled first — and if that call fails, the account is kept rather than
+  deleted, because deleting and continuing to bill is the one worse outcome.
+- **A lifetime licence key.** It stays bound to the deleted user id unless
+  released, so the person who paid for it could never redeem it again. The
+  entitlement's store and licence identifiers are cleared before the row
+  cascades away.
+
+`webhook_events` and `store_notifications` are deliberately **not** deleted:
+they answer "did this person pay", and a refund request can arrive after the
+account is gone. Neither carries a `user_id` column — both are keyed by the
+provider's own event id, and the attribution lives inside the raw payload,
+which is the thing that makes the record worth keeping. What does get cleared
+is `rate_limits`, whose buckets are keyed `<kind>:<user-id>` and which no
+foreign key reaches.
+
+A test asserting the endpoint refused when it could not read the entitlement
+caught the real bug here: the first version swallowed the read error, which
+made an unreachable table look identical to "no subscription".
 
 ---
 
@@ -170,3 +209,6 @@ test said so.
   server said the user was authenticated but the SDK had not loaded.
 - The drill generator's band mismatch (§5 above).
 - `interleave`'s stranding bug (§4 above).
+- `POST /api/account/delete` swallowed a failed entitlement read, so an
+  unreachable table read as "no subscription" and the account was deleted
+  anyway (§11 above).

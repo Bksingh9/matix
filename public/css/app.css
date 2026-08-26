@@ -253,6 +253,17 @@ details.settings[open] summary{color:var(--amber);border-bottom:1px solid var(--
 .plan-note a{color:var(--amber);}
 @media (max-width:400px){.auth-mail{display:none;}}
 
+/* Account deletion. Set apart and deliberately unstyled-looking: it is
+   required to be reachable, and equally required not to be pressed by
+   someone reaching for "sign out". */
+.danger-zone{margin-top:18px;padding-top:14px;border-top:1px solid var(--line);}
+.danger-zone .sub{margin:8px 0 12px;}
+.linkish.danger{color:var(--ink-faint);}
+.linkish.danger:hover{color:var(--coral);}
+.btn-ghost.danger{color:var(--coral);border-color:rgba(242,121,107,.35);}
+.btn-ghost.danger:hover{border-color:var(--coral);}
+.btn-ghost.danger[disabled]{opacity:.55;}
+
 /* ============ WEAK-SPOT REPORT ============ */
 .ws-list{display:flex;flex-direction:column;gap:2px;margin-top:4px;}
 .ws-row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;font-family:var(--mono);font-size:11px;padding-top:7px;}

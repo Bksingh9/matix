@@ -33,6 +33,30 @@ export async function fakeSupabase(seed = {}) {
       return send(res, 200, user);
     }
 
+    /* auth/v1/admin/users/:id — account deletion.
+     *
+     * Emulates the `on delete cascade` in the schema, because that cascade is
+     * the entire deletion: the handler deletes one auth user and trusts the
+     * database to take the rest. A fake that dropped only the auth row would
+     * let a missing cascade pass its test. */
+    const del = url.pathname.match(/^\/auth\/v1\/admin\/users\/([\w-]+)$/);
+    if (del && req.method === 'DELETE') {
+      const uid = del[1];
+      const users = (tables.__users ||= []);
+      const i = users.findIndex(u => u.id === uid);
+      if (i === -1) return send(res, 404, { message: 'User not found' });
+      users.splice(i, 1);
+
+      // Every table whose user_id references auth.users(id).
+      for (const t of ['profiles', 'entitlements', 'runs', 'attempts', 'drills',
+                       'daily_scores', 'player_progress', 'achievements',
+                       'league_members', 'league_standing']) {
+        const key = t === 'profiles' ? 'id' : 'user_id';
+        tables[t] = (tables[t] || []).filter(r => r[key] !== uid);
+      }
+      return send(res, 200, {});
+    }
+
     // RPC: the two SECURITY DEFINER helpers, emulated well enough that the
     // handlers exercise their real code paths.
     const rpc = url.pathname.match(/^\/rest\/v1\/rpc\/(\w+)$/);
@@ -217,7 +241,9 @@ function matches(row, params) {
 
     if (op === 'eq' && String(cell) !== value) return false;
     if (op === 'neq' && String(cell) === value) return false;
-    if ((op === 'ilike' || op === 'like') && String(cell ?? '').toLowerCase() !== value.replace(/%/g, '').toLowerCase()) return false;
+    if (op === 'ilike' || op === 'like') {
+      if (!likeMatch(String(cell ?? ''), value, op === 'ilike')) return false;
+    }
     if (op === 'is' && !(value === 'null' ? cell == null : String(cell) === value)) return false;
     if (op === 'in') {
       const list = value.replace(/^\(|\)$/g, '').split(',').map(v => v.replace(/^"|"$/g, ''));
@@ -232,6 +258,18 @@ function matches(row, params) {
     }
   }
   return true;
+}
+
+/* Real SQL LIKE, not "strip the wildcards and compare". The old version made
+   `like('bucket', '%:<uuid>')` match nothing while looking like it worked —
+   a delete that quietly removes no rows is exactly the kind of no-op this
+   fake is supposed to catch. */
+function likeMatch(cell, pattern, insensitive) {
+  const rx = pattern
+    .replace(/[.*+?^${}()|[\]\\]/g, '\\$&')   // regex metacharacters
+    .replace(/%/g, '.*')                      // SQL wildcards
+    .replace(/_/g, '.');
+  return new RegExp(`^${rx}$`, insensitive ? 'i' : '').test(cell);
 }
 
 /* Dates compare as dates, numbers as numbers, everything else as strings. */

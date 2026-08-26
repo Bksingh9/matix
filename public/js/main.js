@@ -10,12 +10,12 @@ import {
   chipTap, digit, loop, share, setAttemptSink, setRunSink, setResultsHook
 } from './engine.js';
 import { recordAttempt, submitRun, flush, initRunLog, setProgressSink } from './runlog.js';
-import { initProgress, refreshProgress, progressView, renderXpPanel, openProfile, closeProfile } from './progress.js';
+import { initProgress, refreshProgress, progressView, renderXpPanel, openProfile, closeProfile, toast } from './progress.js';
 import { initDrills, startDrill, onResults } from './drills.js';
 import { openPaywall, closePaywall, openReward, closeReward, startCheckout, watchReward, devPreviewPro, tryLicence, resumeAfterCheckout, restorePurchases } from './paywall.js';
 import { initBilling, applyLocalPrices } from './billing.js';
 import { initAuth, openAuthSheet, closeAuthSheet, submitAuthSheet, onAuthChange } from './auth.js';
-import { openAccount, closeAccount, openPortal, doSignOut } from './account.js';
+import { openAccount, closeAccount, openPortal, doSignOut, askDelete, cancelDelete, confirmDelete } from './account.js';
 import { openSocial, closeSocial, setTab, saveHandle, socialSignIn } from './social.js';
 import { initInstall, noteRunFinished, acceptInstall, dismissInstall } from './install.js';
 import { initNative, nativeStorage, isNative } from './native.js';
@@ -71,6 +71,9 @@ function bind() {
   $('#acctm').addEventListener('click', e => { if (e.target.id === 'acctm') closeAccount(); });
   $('#acct-manage').addEventListener('click', openPortal);
   $('#acct-signout').addEventListener('click', doSignOut);
+  $('#acct-delete').addEventListener('click', askDelete);
+  $('#acct-delete-no').addEventListener('click', cancelDelete);
+  $('#acct-delete-yes').addEventListener('click', confirmDelete);
 
   // game grid — delegated
   $('#game-grid').addEventListener('click', e => {
@@ -249,7 +252,18 @@ function onKey(e) {
 
 /* A manifest shortcut or a deep link asking for a specific mode. */
 function handleLaunchIntent() {
-  const go = new URLSearchParams(location.search).get('go');
+  const params = new URLSearchParams(location.search);
+
+  // We just deleted their account and reloaded. Say so — a silent reset looks
+  // identical to the app having lost their data, which is the exact anxiety
+  // deletion is supposed to resolve.
+  if (params.get('deleted') === '1') {
+    history.replaceState(null, '', location.pathname);
+    toast({ glyph: '✓', title: 'Account deleted', body: 'Everything is gone, as asked.' });
+    return;
+  }
+
+  const go = params.get('go');
   if (!go) return;
   history.replaceState(null, '', location.pathname);
   launchMode(go);

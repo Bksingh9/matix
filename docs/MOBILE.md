@@ -116,13 +116,20 @@ and add the Associated Domains capability with `applinks:mindsharp.app`.
 - **Do not mention web pricing in the app.** No "cheaper on our website", no
   link to the Lemon Squeezy checkout. `startCheckout` routes to native billing
   when `isNative()`.
-- **Restore Purchases must exist and be reachable** on iOS. It is in the
-  account sheet.
+- **Restore Purchases must exist and be reachable** on iOS. It is on the
+  paywall, shown only when `Capacitor.isNativePlatform()` — that is where
+  someone who reinstalled goes looking, and it means nothing on the web.
 - **Sign in must not be mandatory.** It is not — the game plays anonymously,
   which also satisfies Apple's rule about not requiring registration for
   features that do not need it.
-- **Account deletion must be in-app** (App Store guideline 5.1.1(v)). The
-  account sheet has it.
+- **Account deletion must be in-app** (App Store guideline 5.1.1(v), and
+  Play's data-deletion policy). It is at the bottom of the account sheet,
+  behind a two-tap confirmation, and it deletes rather than deactivates.
+  `POST /api/account/delete` refuses while an App Store or Play subscription
+  is live and says which store to cancel at, because deleting the account
+  would not stop that billing — only the store can. A Lemon Squeezy
+  subscription is cancelled for them first, since there we do have the
+  authority.
 - **No claims about cognition.** Never say MindSharp makes anyone smarter.
   Faster and more accurate at arithmetic is provable; the rest is not, and
   health-adjacent claims attract both rejection and regulators.
