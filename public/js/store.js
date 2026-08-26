@@ -13,7 +13,8 @@ export const K = {
   queue: 'mindsharp:runqueue',
   migrated: 'mindsharp:migrated',
   progress: 'mindsharp:progress',
-  install: 'mindsharp:install'
+  install: 'mindsharp:install',
+  notify: 'mindsharp:notify'
 };
 
 const mem = new Map();

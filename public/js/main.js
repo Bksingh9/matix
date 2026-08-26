@@ -18,6 +18,7 @@ import { openAccount, closeAccount, openPortal, doSignOut } from './account.js';
 import { openSocial, closeSocial, setTab, saveHandle, socialSignIn } from './social.js';
 import { initInstall, noteRunFinished, acceptInstall, dismissInstall } from './install.js';
 import { initNative, nativeStorage, isNative } from './native.js';
+import { initNotifications, maybeOfferReminders, enableReminders, declineReminders, reschedule, toggleReminders, reminderSettingsHtml } from './notify.js';
 import { refreshEntitlement, migrateLocalProgress } from './entitlement.js';
 
 /* ============================================================ BINDINGS
@@ -34,6 +35,14 @@ function bind() {
   $('#install-banner').addEventListener('click', e => {
     if (e.target.closest('#install-go')) acceptInstall();
     else if (e.target.closest('#install-dismiss')) dismissInstall();
+  });
+  $('#notify-banner').addEventListener('click', e => {
+    if (e.target.closest('#notify-yes')) enableReminders();
+    else if (e.target.closest('#notify-no')) declineReminders();
+  });
+  // The settings row only exists in a native shell.
+  $('.toggles').addEventListener('click', e => {
+    if (e.target.closest('#toggle-notify')) toggleReminders();
   });
 
   $('#social-cta').addEventListener('click', () => openSocial('menu'));
@@ -195,6 +204,7 @@ function bind() {
     await refreshProgress();
     syncChips();
     renderMenu();
+    reschedule();
   });
 }
 
@@ -280,7 +290,14 @@ async function init() {
   setAttemptSink(recordAttempt);
   setRunSink(submitRun);
   setResultsHook(onResults);
-  setProgressSink(p => { renderXpPanel(p); syncChips(); noteRunFinished(); });
+  setProgressSink(p => {
+    renderXpPanel(p);
+    syncChips();
+    noteRunFinished();
+    // Offer reminders only when the streak just grew — that is when someone
+    // has something to protect, rather than a prompt out of nowhere.
+    if (p.streak?.extended) { maybeOfferReminders(); reschedule(); }
+  });
   initRunLog();
   initDrills();
 
@@ -290,12 +307,17 @@ async function init() {
   requestAnimationFrame(loop);
 
   await initNative();
+  await initNotifications();
 
   await loadAll();
   await initProgress();
   syncChips();
   renderMenu();
   syncSound();
+
+  // Streak reminders live next to sound; the row only exists on a device.
+  const rem = reminderSettingsHtml();
+  if (rem) $('.toggles').insertAdjacentHTML('beforeend', rem);
 
   // Entitlement is server-decided. Until /api/me answers, the client behaves
   // as free — which is the correct failure mode when it never answers at all.
@@ -305,6 +327,7 @@ async function init() {
     await refreshProgress();
     syncChips();
     renderMenu();
+    reschedule();
   });
 
   await initAuth();
