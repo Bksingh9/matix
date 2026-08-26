@@ -407,3 +407,30 @@ details.settings[open] summary{color:var(--amber);border-bottom:1px solid var(--
 #handle-input:focus{outline:none;border-color:var(--amber);}
 #handle-save{background:var(--surface-2);border:1px solid var(--line-strong);border-radius:11px;padding:0 16px;
   font-family:var(--mono);font-weight:700;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--amber);}
+
+/* ============ SAFE AREAS (notch / home indicator) ============
+   viewport-fit=cover lets the app paint under the notch; these keep the
+   content out from under it. Harmless in a browser without insets. */
+body{
+  padding-top:calc(18px + env(safe-area-inset-top));
+  padding-bottom:calc(30px + env(safe-area-inset-bottom));
+  padding-left:calc(16px + env(safe-area-inset-left));
+  padding-right:calc(16px + env(safe-area-inset-right));
+}
+.sheet{padding-bottom:calc(26px + env(safe-area-inset-bottom));}
+#toasts{bottom:calc(18px + env(safe-area-inset-bottom));}
+
+/* ============ INSTALL BANNER ============ */
+#install-banner{position:fixed;left:0;right:0;bottom:calc(14px + env(safe-area-inset-bottom));z-index:70;
+  display:none;align-items:center;gap:11px;width:calc(100% - 32px);max-width:420px;margin:0 auto;
+  background:var(--surface-2);border:1px solid var(--amber);border-radius:14px;padding:12px 14px;
+  box-shadow:0 14px 36px -14px rgba(0,0,0,.75);animation:up .3s cubic-bezier(.2,.8,.2,1);}
+#install-banner.show{display:flex;}
+.ib-text{display:flex;flex-direction:column;gap:3px;min-width:0;flex:1;}
+.ib-text b{font-size:14px;font-weight:700;}
+.ib-text>span{font-family:var(--mono);font-size:9.5px;line-height:1.5;color:var(--ink-dim);}
+.ib-text i{font-style:normal;color:var(--amber);}
+.ib-go{flex:none;font-family:var(--mono);font-weight:700;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  color:#241905;background:var(--amber);border-radius:9px;padding:9px 13px;}
+.ib-x{flex:none;width:26px;height:26px;border-radius:7px;color:var(--ink-faint);display:flex;align-items:center;justify-content:center;font-size:13px;}
+.ib-x:hover{color:var(--ink);}

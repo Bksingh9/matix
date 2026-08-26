@@ -3,6 +3,7 @@ import { K, sdel } from './store.js';
 import { track, initAnalytics } from './analytics.js';
 import { $, $$, cap1 } from './util.js';
 import { audio } from './audio.js';
+import { GAMES } from './games.js';
 import { setScreen, renderMenu, syncSound, updAnswer, setChipData } from './ui.js';
 import {
   gateGame, startRun, endRun, submitPad, submitTF, submitOp,
@@ -15,6 +16,7 @@ import { openPaywall, closePaywall, openReward, closeReward, startCheckout, watc
 import { initAuth, openAuthSheet, closeAuthSheet, submitAuthSheet, onAuthChange } from './auth.js';
 import { openAccount, closeAccount, openPortal, doSignOut } from './account.js';
 import { openSocial, closeSocial, setTab, saveHandle, socialSignIn } from './social.js';
+import { initInstall, noteRunFinished, acceptInstall, dismissInstall } from './install.js';
 import { refreshEntitlement, migrateLocalProgress } from './entitlement.js';
 
 /* ============================================================ BINDINGS
@@ -27,6 +29,11 @@ function bind() {
   // The Pro badge is the way in to cancelling, so it has to be a button.
   $('#pro-badge').addEventListener('click', () => openAccount('badge'));
   $('#daily-card').addEventListener('click', () => { audio(); startRun('daily', true); });
+
+  $('#install-banner').addEventListener('click', e => {
+    if (e.target.closest('#install-go')) acceptInstall();
+    else if (e.target.closest('#install-dismiss')) dismissInstall();
+  });
 
   $('#social-cta').addEventListener('click', () => openSocial('menu'));
   $('#social-x').addEventListener('click', closeSocial);
@@ -213,6 +220,21 @@ function onKey(e) {
   }
 }
 
+/* A manifest shortcut or a deep link asking for a specific mode. */
+function handleLaunchIntent() {
+  const go = new URLSearchParams(location.search).get('go');
+  if (!go) return;
+  history.replaceState(null, '', location.pathname);
+  if (go === 'daily') { audio(); startRun('daily', true); return; }
+  // hasOwnProperty, not a bare lookup: GAMES['__proto__'] is Object.prototype,
+  // which is truthy and would start a run with no generator behind it.
+  if (Object.prototype.hasOwnProperty.call(GAMES, go) && !GAMES[go].hidden) {
+    if (!gateGame(go)) return;
+    audio();
+    if (go === 'drill') startDrill('shortcut'); else startRun(go, false);
+  }
+}
+
 /* Push the current progression into the top-bar chips. */
 function syncChips() {
   const p = progressView();
@@ -227,13 +249,14 @@ async function init() {
 
   initAnalytics();
   bind();
+  initInstall();
 
   // The engine reports attempts and finished runs through these sinks, so it
   // never imports the network layer.
   setAttemptSink(recordAttempt);
   setRunSink(submitRun);
   setResultsHook(onResults);
-  setProgressSink(p => { renderXpPanel(p); syncChips(); });
+  setProgressSink(p => { renderXpPanel(p); syncChips(); noteRunFinished(); });
   initRunLog();
   initDrills();
 
@@ -272,6 +295,9 @@ async function init() {
 
   // Landed back from a checkout: poll until the webhook lands.
   resumeAfterCheckout();
+
+  // Home-screen shortcuts (manifest `shortcuts`) arrive as ?go=<mode>.
+  handleLaunchIntent();
 }
 
 init();
