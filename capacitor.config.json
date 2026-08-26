@@ -2,7 +2,6 @@
   "appId": "app.mindsharp.game",
   "appName": "MindSharp",
   "webDir": "public",
-  "bundledWebRuntime": false,
   "android": {
     "allowMixedContent": false,
     "captureInput": true,
