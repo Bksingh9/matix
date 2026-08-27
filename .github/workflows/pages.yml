@@ -1,0 +1,63 @@
+# Publish the playable build to GitHub Pages.
+#
+# This is the free tier of the plan in MONETISATION_PLAN.md: a real URL people
+# can play on before any of the paid rails exist. There is no backend here, so
+# the client runs anonymous and local-only — which it already knows how to do,
+# and which never grants Pro.
+#
+# Point it at a real backend by setting the API_ORIGIN repository variable to
+# a deployed Vercel origin; leave it unset for the anonymous demo.
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main, claude/mindsharp-product-spec-tcsksb]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never let two deploys race; finish the running one rather than cancelling,
+# so a half-uploaded artifact is not what ends up live.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      # A broken build must not reach a URL people are looking at.
+      - run: npm ci
+      - run: npm run check
+
+      - id: pages
+        uses: actions/configure-pages@v5
+
+      # base_path is "" for a user/org site and "/<repo>" for a project site;
+      # configure-pages works it out from the Pages settings.
+      - name: Build static site
+        run: |
+          BASE="${{ steps.pages.outputs.base_path }}"
+          node scripts/build-static.mjs --base="$BASE" --api="${{ vars.API_ORIGIN }}"
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

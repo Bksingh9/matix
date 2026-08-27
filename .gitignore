@@ -23,3 +23,7 @@ DerivedData/
 *.xcuserdatad/
 
 .DS_Store
+
+# static build output (scripts/build-static.mjs)
+dist/
+dist-preview.png
