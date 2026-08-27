@@ -5,7 +5,7 @@
   "type": "module",
   "description": "MindSharp \u2014 mental-arithmetic fitness tracker. Vanilla JS frontend + Vercel serverless functions + Supabase.",
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "scripts": {
     "dev": "vercel dev",
