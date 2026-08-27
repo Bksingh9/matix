@@ -13,6 +13,7 @@ Capacitor shells around the same `public/` build, with no second codebase.
 
 - `MINDSHARP_BUILD_SPEC.md` — the build brief this was implemented against
 - `MONETISATION_PLAN.md` — the commercial reasoning behind it
+- `LAUNCH.md` — where to distribute it, and how the money arrives
 - `docs/LEMONSQUEEZY.md` — where the live Lemon Squeezy API differs from the spec
 - `docs/DEVIATIONS.md` — every place the implementation departs from the spec, and why
 - `docs/MOBILE.md` — building and shipping the store apps
@@ -133,6 +134,31 @@ Set `CONFIG.analytics.plausible.domain` in `public/js/config.js` to the site
 registered in your Plausible account. Leave it empty and no third-party script
 loads at all. `npm run check:events` verifies all fourteen funnel events are
 still fired; `test/e2e/funnel.test.mjs` verifies they land at runtime.
+
+## Putting it somewhere
+
+The frontend is a static site. `scripts/build-static.mjs` turns `public/` into
+a `dist/` any host will serve:
+
+```bash
+node scripts/build-static.mjs --base=          # served at a domain root
+node scripts/build-static.mjs --base=/matix    # a GitHub Pages project site
+node scripts/build-static.mjs --base= --api=https://your-app.vercel.app
+```
+
+The rewrite exists because the app uses absolute paths (`/js/main.js`), which
+is what Vercel serves it as and what breaks under a subpath. It also restores
+the file extensions Vercel's `cleanUrls` hides, and repoints the service
+worker's shell and scope.
+
+Without `--api`, `/api/*` 404s and the client runs anonymous and local-only —
+which it already knows how to do, and which never grants Pro. That is the
+correct shape for a demo.
+
+**GitHub Pages** is wired in `.github/workflows/pages.yml` but needs the
+repository setting turned on once: *Settings → Pages → Source: GitHub
+Actions*. Every push then builds and deploys. Set the `API_ORIGIN` repository
+variable to point the deployed site at a real backend.
 
 ## Scripts
 
