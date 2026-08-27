@@ -219,6 +219,14 @@ describe('server progression', () => {
     await page.waitForSelector('#streak-chip.urgent', { timeout: 6000 });
     await page.click('#streak-chip');
     await page.waitForSelector('#profm.show');
+    // The sheet opens holding the static "Loading…" placeholder from
+    // index.html and fills in once /api/progress lands. Reading it before
+    // then is a race that only shows up on a slower machine. Waiting on the
+    // placeholder clearing rather than on rendered content, because this
+    // fixture has no achievements to render.
+    await page.waitForFunction(
+      () => !/Loading/.test(document.querySelector('#prof-body')?.innerText || ''),
+      null, { timeout: 6000 });
     assert.match(await page.locator('#prof-body').innerText(), /or you lose it/i);
     await ctx.close();
   });
