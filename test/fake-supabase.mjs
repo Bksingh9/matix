@@ -6,6 +6,10 @@ import { Readable } from 'node:stream';
  * Enough of the wire protocol to drive the real supabase-js client through the
  * real webhook handler: the point is to exercise api/webhooks/lemonsqueezy.js
  * as written, not a re-implementation of it. */
+/* Relative to now, never a literal: a seeded date that drifts into the past
+   makes a passing test start failing on a calendar boundary. */
+const isoDay = n => new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);
+
 export async function fakeSupabase(seed = {}) {
   const tables = {
     profiles: [],
@@ -91,7 +95,7 @@ export async function fakeSupabase(seed = {}) {
         const seasons = (tables.league_seasons ||= []);
         const groups = (tables.league_groups ||= []);
         const mem = (tables.league_members ||= []);
-        const seasonId = seasons.length ? seasons[0].id : (seasons.push({ id: 1, starts_on: '2026-08-24', ends_on: '2026-08-30' }), 1);
+        const seasonId = seasons.length ? seasons[0].id : (seasons.push({ id: 1, starts_on: isoDay(-3), ends_on: isoDay(3) }), 1);
         const seasonGroupIds = new Set(groups.filter(g => g.season_id === seasonId).map(g => g.id));
 
         const existing = mem.find(m => m.user_id === b.p_user_id && seasonGroupIds.has(m.group_id));

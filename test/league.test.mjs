@@ -10,6 +10,25 @@ import { fakeSupabase, mockReq, mockRes } from './fake-supabase.mjs';
 
 const USER = '3f8a1c2e-4b5d-4e6f-8a9b-0c1d2e3f4a5b';
 const TOKEN = 'tok-league';
+
+/* Dates are computed from the clock, never written as literals.
+ *
+ * These endpoints resolve "today" and "the current season" from the system
+ * clock, so a seeded literal is a test that passes until the date rolls over
+ * and then fails for a reason that has nothing to do with the code. This file
+ * previously hard-coded the day it was written on, and broke the next morning. */
+const ymd = d => d.toISOString().slice(0, 10);
+const daysFromNow = n => ymd(new Date(Date.now() + n * 86400000));
+const TODAY = daysFromNow(0);
+
+/* The Monday-to-Sunday week containing today, which is the season shape
+   settle_season assumes. */
+const MONDAY = (() => {
+  const d = new Date();
+  const back = (d.getUTCDay() + 6) % 7;      // Sunday is 0, and weeks start Monday
+  return ymd(new Date(d.getTime() - back * 86400000));
+})();
+const SUNDAY = ymd(new Date(new Date(MONDAY).getTime() + 6 * 86400000));
 let sb, league, leaderboard, settle;
 
 before(async () => {
@@ -31,7 +50,7 @@ after(async () => { await sb?.close(); });
 
 beforeEach(() => {
   sb.tables.profiles = [{ id: USER, email: 'p@example.com', handle: null }];
-  sb.tables.league_seasons = [{ id: 1, starts_on: '2026-08-24', ends_on: '2026-08-30' }];
+  sb.tables.league_seasons = [{ id: 1, starts_on: MONDAY, ends_on: SUNDAY }];
   sb.tables.league_groups = [{ id: 10, season_id: 1, tier: 1 }];
   sb.tables.league_members = [];
   sb.tables.league_standing = [];
@@ -56,7 +75,7 @@ const members = n => Array.from({ length: n }, (_, i) => ({
   group_id: 10,
   user_id: i === 0 ? USER : `user-${String(i).padStart(4, '0')}`,
   xp: (n - i) * 100,
-  joined_at: `2026-08-24T0${i % 10}:00:00Z`
+  joined_at: `${MONDAY}T0${i % 10}:00:00Z`
 }));
 
 describe('GET /api/league', () => {
@@ -143,8 +162,8 @@ describe('GET /api/league', () => {
   test('carries the season window so the client can show a countdown', async () => {
     sb.tables.league_members = members(8);
     const res = await call(league);
-    assert.equal(res.json.season.startsOn, '2026-08-24');
-    assert.ok(res.json.season.endsAt.startsWith('2026-08-30'), 'ends at the end of the last day');
+    assert.equal(res.json.season.startsOn, MONDAY);
+    assert.ok(res.json.season.endsAt.startsWith(SUNDAY), 'ends at the end of the last day');
   });
 });
 
@@ -177,7 +196,7 @@ describe('POST /api/league (handle)', () => {
 
 describe('GET /api/leaderboard', () => {
   const board = n => Array.from({ length: n }, (_, i) => ({
-    daily_date: '2026-08-26',
+    daily_date: TODAY,
     user_id: i === 0 ? USER : `u-${i}`,
     handle: i === 0 ? 'brij' : `Player ${i}`,
     score: (n - i) * 50,
@@ -263,7 +282,7 @@ describe('POST /api/league/settle', () => {
   });
 
   test('accepts the correct secret and reports what it closed', async () => {
-    sb.tables.league_seasons = [{ id: 1, starts_on: '2026-08-10', ends_on: '2026-08-16' }];
+    sb.tables.league_seasons = [{ id: 1, starts_on: daysFromNow(-21), ends_on: daysFromNow(-15) }];
     const req = mockReq({ method: 'POST', headers: { authorization: 'Bearer cron-secret-value' } });
     const res = mockRes();
     await settle(req, res);
