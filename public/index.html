@@ -22,7 +22,24 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,300..800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
 <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+<link rel="stylesheet" href="css/themes.css" />
 <link rel="stylesheet" href="css/app.css" />
+<script>
+/* Set the theme before the first paint. Doing this from a module would show
+   one frame of the default theme on every launch — a visible flash, and worse
+   on a light theme where the flash is a full dark screen. Kept in sync with
+   public/js/theme.js, which owns the key and the default. */
+(function(){
+  var C={ember:'#16120c',clay:'#E3DFF4',aurora:'#241852',neon:'#0B0712',bold:'#EFEDE6'};
+  var t='ember';
+  try{var v=localStorage.getItem('mindsharp:theme');if(v&&C[v])t=v;}catch(e){}
+  document.documentElement.dataset.theme=t;
+  /* The browser paints its own chrome from this — the status bar on a phone.
+     Left at the dark default, a light theme grows a black bar above it. */
+  var m=document.querySelector('meta[name="theme-color"]');
+  if(m)m.setAttribute('content',C[t]);
+})();
+</script>
 </head>
 <body>
 <div class="app">
@@ -89,6 +106,10 @@
             <button data-diff="hard">Hard</button>
             <button data-diff="expert" data-pro="1">Expert</button>
           </div>
+        </div>
+        <div class="setrow">
+          <span class="label">Theme</span>
+          <div id="theme-picker"></div>
         </div>
         <div class="toggles">
           <button class="toggle on" id="toggle-auto"><span class="tn">Auto-submit</span><span class="switch"></span></button>

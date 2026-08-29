@@ -21,6 +21,7 @@ import { initInstall, noteRunFinished, acceptInstall, dismissInstall } from './i
 import { initNative, nativeStorage, isNative } from './native.js';
 import { initNotifications, maybeOfferReminders, enableReminders, declineReminders, reschedule, toggleReminders, reminderSettingsHtml } from './notify.js';
 import { refreshEntitlement, migrateLocalProgress } from './entitlement.js';
+import { setTheme, loadTheme, themePickerHtml } from './theme.js';
 
 /* ============================================================ BINDINGS
    All DOM wiring lives here. Dynamic content (game cards, the results CTA)
@@ -123,6 +124,18 @@ function bind() {
 
   $('#toggle-auto').addEventListener('click', () => { S.autoSubmit = !S.autoSubmit; $('#toggle-auto').classList.toggle('on', S.autoSubmit); savePrefs(); });
   $('#toggle-sound').addEventListener('click', () => { S.sound = !S.sound; $('#toggle-sound').classList.toggle('on', S.sound); if (S.sound) audio(); syncSound(); savePrefs(); });
+
+  // Theme picker. Re-rendered on change so the pressed state follows, and
+  // delegated because of it.
+  const paintThemes = () => { $('#theme-picker').innerHTML = themePickerHtml(loadTheme()); };
+  paintThemes();
+  $('#theme-picker').addEventListener('click', e => {
+    const card = e.target.closest('[data-theme-id]');
+    if (!card) return;
+    setTheme(card.dataset.themeId);
+    paintThemes();
+    track('theme_changed', { theme: card.dataset.themeId });
+  });
 
   $('#reset-btn').addEventListener('click', async () => {
     const b = $('#reset-btn');

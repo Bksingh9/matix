@@ -1,0 +1,85 @@
+/* ============================================================ THEMES
+   Four looks over one app.
+
+   Every one of these only reassigns the variables app.css already uses, so
+   the whole interface restyles without a single component knowing themes
+   exist. That is the entire reason app.css was written against tokens rather
+   than literals.
+
+   Two of these are light. That is why --on-accent exists: text sitting on the
+   accent colour has to flip with it, and a hard-coded dark brown on a light
+   blue accent is unreadable.
+
+   Applied as data-theme on <html>, set before first paint by an inline script
+   in index.html — assigning it after the stylesheet loads would show one
+   frame of the wrong theme on every launch. */
+
+/* ---------- EMBER — the original, and still the default ---------- */
+html[data-theme="ember"]{
+  --bg:#16120c; --bg-glow:#241a10;
+  --surface:#211a11; --surface-2:#2a2116; --surface-3:#332818;
+  --line:rgba(255,214,150,.10); --line-strong:rgba(255,214,150,.20);
+  --ink:#f4ecdd; --ink-dim:#a99d86; --ink-faint:#6f6551;
+  --amber:#ffb43a; --amber-deep:#e08a1e; --amber-soft:rgba(255,180,58,.14);
+  --mint:#63d6a4; --coral:#f2796b; --on-accent:#241905;
+  --lift:0 1px 2px rgba(0,0,0,.4), 0 6px 18px -10px rgba(0,0,0,.7);
+  --lift-lg:0 2px 4px rgba(0,0,0,.4), 0 16px 40px -18px rgba(0,0,0,.85);
+}
+
+/* ---------- CLAY — soft, tactile, light ---------- */
+html[data-theme="clay"]{
+  --bg:#E3DFF4; --bg-glow:#FFE0B8;
+  --surface:#F6F4FE; --surface-2:#ECE9F8; --surface-3:#E0DBF2;
+  --line:rgba(120,105,175,.14); --line-strong:rgba(120,105,175,.26);
+  --ink:#3A3357; --ink-dim:#847CA6; --ink-faint:#B4AECF;
+  --amber:#FF8C5B; --amber-deep:#E46B38; --amber-soft:rgba(255,140,91,.14);
+  --mint:#48C88E; --coral:#F2616B; --on-accent:#4A1C06;
+  /* Clay's depth comes from a light-source highlight plus a soft drop, not
+     from the dark-theme shadows above — those vanish on a pale surface. */
+  --lift:6px 8px 18px rgba(83,66,138,.16), inset 2px 2px 5px rgba(255,255,255,.8);
+  --lift-lg:8px 12px 28px rgba(83,66,138,.22), inset 2px 2px 6px rgba(255,255,255,.85);
+}
+
+/* ---------- AURORA — luminous, deep ---------- */
+html[data-theme="aurora"]{
+  --bg:#241852; --bg-glow:#7E3B7E;
+  --surface:#31235C; --surface-2:#3B2B6C; --surface-3:#46337D;
+  --line:rgba(255,255,255,.12); --line-strong:rgba(255,255,255,.22);
+  --ink:#F2ECFF; --ink-dim:#CBBEE8; --ink-faint:#A99CC9;
+  --amber:#9FF0FF; --amber-deep:#6FD4E8; --amber-soft:rgba(159,240,255,.14);
+  --mint:#5FE0C0; --coral:#FF7FA8; --on-accent:#12103A;
+  --lift:0 10px 26px rgba(20,10,40,.4), inset 1px 1px 1px rgba(255,255,255,.14);
+  --lift-lg:0 16px 40px rgba(20,10,40,.55), inset 1px 1px 2px rgba(255,255,255,.2);
+}
+
+/* ---------- NEON — arcade ---------- */
+html[data-theme="neon"]{
+  --bg:#0B0712; --bg-glow:#271738;
+  --surface:#221A38; --surface-2:#191230; --surface-3:#2C2148;
+  --line:rgba(120,90,200,.20); --line-strong:rgba(120,90,200,.38);
+  --ink:#EDE9FF; --ink-dim:#B79BD8; --ink-faint:#8478AE;
+  --amber:#3EE7FF; --amber-deep:#12A6D8; --amber-soft:rgba(62,231,255,.14);
+  --mint:#C4FF4D; --coral:#FF4D7D; --on-accent:#06131A;
+  --lift:0 6px 18px rgba(0,0,0,.5), inset 1px 1px 2px rgba(120,90,200,.2);
+  --lift-lg:0 12px 34px rgba(0,0,0,.65), 0 0 24px -12px var(--amber);
+}
+
+/* ---------- BOLD — flat and loud ---------- */
+html[data-theme="bold"]{
+  --bg:#EFEDE6; --bg-glow:#FFE9A8;
+  --surface:#FFFFFF; --surface-2:#F7F5EF; --surface-3:#EAE7DC;
+  --line:rgba(18,20,29,.14); --line-strong:rgba(18,20,29,.9);
+  --ink:#12141D; --ink-dim:#4A4D5C; --ink-faint:#8A8D9C;
+  --amber:#3B4EF0; --amber-deep:#2536C4; --amber-soft:rgba(59,78,240,.12);
+  --mint:#2FCE6E; --coral:#FF5E5B; --on-accent:#FFFFFF;
+  /* No blur at all: Bold's depth is a hard offset block, the way a sticker
+     sits on paper. */
+  --lift:4px 4px 0 rgba(18,20,29,.18);
+  --lift-lg:6px 6px 0 rgba(18,20,29,.24);
+}
+
+/* The light themes need the page itself to be light; app.css paints the
+   backdrop from --bg and --bg-glow, so this follows automatically. What does
+   not follow is the browser UI, which is told separately in index.html. */
+html[data-theme="clay"], html[data-theme="bold"]{ color-scheme:light; }
+html[data-theme="ember"], html[data-theme="aurora"], html[data-theme="neon"]{ color-scheme:dark; }
