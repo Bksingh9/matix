@@ -168,21 +168,17 @@ export function fromDrill(p) {
 }
 
 export function generate() {
-  /* The daily mixes formats so twelve problems do not read as one drill, and
-     every draw comes from the seeded RNG — so the mix, the numbers AND the
-     grid patterns are identical for every player worldwide. That is the whole
-     premise of a shared board.
+  /* The daily mixes arithmetic formats so twelve problems do not read as one
+     drill, and every draw comes from the seeded RNG so the mix and the numbers
+     are identical for every player worldwide.
 
-     Matrix is in the mix at ~1 in 6: enough that a memory round shows up in
-     most dailies, rare enough that it stays a change of pace rather than a
-     different game. */
-  if (S.isDaily) {
-    const r = RND();
-    if (r < .50) return genPad();
-    if (r < .72) return genVerify();
-    if (r < .84) return genOperator();
-    return genMatrix();
-  }
+     Deliberately NOT including Matrix. The daily has no clock, and a memory
+     grid with unlimited time to answer is not a challenge — the mode's whole
+     tension is the reveal window closing. It would also change what the daily
+     measures: this is an arithmetic tracker, and the daily board would start
+     ranking two unrelated skills as one number. Matrix has its own three
+     modes; a matrix daily would need its own timing and its own board. */
+  if (S.isDaily) { const r = RND(); return r < .6 ? genPad() : (r < .85 ? genVerify() : genOperator()); }
   if (S.game === 'verify') return genVerify();
   if (S.game === 'operator') return genOperator();
   if (S.game === 'target') return genTarget();
