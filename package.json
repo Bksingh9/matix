@@ -24,7 +24,6 @@
     "verify:android": "node scripts/verify-android.mjs",
     "smoke": "node scripts/smoke-live.mjs",
     "verify:deploy": "node scripts/verify-deploy.mjs",
-    "check:link": "node scripts/verify-deploy.mjs --check-link",
     "preflight": "node scripts/preflight.mjs",
     "store:shots": "node scripts/store-shots.mjs",
     "store:feature": "node scripts/store-feature.mjs",

@@ -54,33 +54,6 @@ export const pinnedUrl = sha => `https://rawcdn.githack.com/Bksingh9/matix/${sha
 const sha = publicSha() || execSync('git rev-parse HEAD', { cwd: ROOT }).toString().trim();
 const base = (process.argv.find(a => a.startsWith('http')) || pinnedUrl(sha)).replace(/\/*$/, '/');
 
-/* --check-link only compares the README's pinned sha with the one above. It
-   needs no network, so it can run in `npm run check` alongside the other
-   guards; the full fetch stays opt-in. */
-if (process.argv.includes('--check-link')) {
-  const readme = readFileSync(join(ROOT, 'README.md'), 'utf8');
-  const m = readme.match(/rawcdn\.githack\.com\/Bksingh9\/matix\/([0-9a-f]{7,40})\/public\//);
-  if (!m) { console.error('✗ README has no pinned play url'); process.exit(1); }
-
-  const here = publicTree('HEAD');
-  const there = publicTree(m[1]);
-
-  /* A shallow clone does not have the pinned commit, so the question is
-     unanswerable rather than failing. Saying so beats a false pass and beats a
-     false failure — this check ran in CI for exactly one commit and broke the
-     build by reporting the second. */
-  if (!there) {
-    console.log(`· cannot check the play url here — ${m[1].slice(0, 8)} is not in this clone (shallow checkout?)`);
-    process.exit(0);
-  }
-  if (here !== there) {
-    console.error(`✗ the README's play url points at ${m[1].slice(0, 8)}, whose public/ differs from the working tree`);
-    console.error(`  players would get a stale build. Point it at a pushed commit carrying this public/:\n    ${pinnedUrl(sha)}index.html`);
-    process.exit(1);
-  }
-  console.log(`✓ the README's play url serves the current public/ (tree ${here.slice(0, 8)})`);
-  process.exit(0);
-}
 
 const walk = d => readdirSync(d).flatMap(f => {
   const p = join(d, f);

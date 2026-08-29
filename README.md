@@ -13,36 +13,24 @@ Capacitor shells around the same `public/` build, with no second codebase.
 
 ## Play it
 
-**https://rawcdn.githack.com/Bksingh9/matix/3edfcb9a523febdfc1ff23214947e4c72b3c4a39/public/index.html**
+**https://bksingh9.github.io/matix/**
 
 Opens on a phone or a desktop, installs to a home screen, and works offline
 after the first load. No account needed — every mode, the daily challenge,
 streaks, XP and achievements run with no backend at all.
 
-The url pins a commit sha on purpose. The same host on a *branch* url serves
-a mutable, per-file cache: the first time this was tried it handed out a
-current `index.html` against a `theme.js` three commits old, converging one
-file at a time over several minutes. A version mix boots fine and misbehaves
-somewhere you are not looking, which is worse than an outage. `npm run
-verify:deploy` fetches every file from a deployed url and fails on any that
-does not match the local commit byte for byte, or that is served with a
-Content-Type an ES module will not load under.
+Deployed by `.github/workflows/pages.yml` on every push: it builds `dist/`,
+publishes it, and then *plays* the result in a real browser before calling the
+run green. `npm run verify:deploy -- <url>` re-checks any deployed url file by
+file against the local commit, and fails on a Content-Type an ES module cannot
+load under — a CDN serving a stale module alongside a fresh index.html boots
+fine and misbehaves somewhere you are not looking.
 
 Signing in, Pro, the weak-spot report and the leaderboards need the serverless
 functions, so they are live only on a deploy that has them — see **Putting it
 somewhere** below. On a static host the client treats an unreachable API as
 "anonymous, free", which is the correct reading for a demo and never grants
 Pro.
-
-- `FREE-STACK.md` — running the whole thing on free tiers, and where "free" has a catch
-- `NOTICE.md` — copyright: public to read, not licensed for reuse
-- `MINDSHARP_BUILD_SPEC.md` — the build brief this was implemented against
-- `MONETISATION_PLAN.md` — the commercial reasoning behind it
-- `LAUNCH.md` — where to distribute it, and how the money arrives
-- `docs/LEMONSQUEEZY.md` — where the live Lemon Squeezy API differs from the spec
-- `docs/DEVIATIONS.md` — every place the implementation departs from the spec, and why
-- `docs/MOBILE.md` — building and shipping the store apps
-- `docs/GO-LIVE.md` — the runbook for taking the first payment
 
 ## Layout
 
