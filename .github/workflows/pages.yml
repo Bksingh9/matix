@@ -40,6 +40,12 @@ jobs:
 
       - id: pages
         uses: actions/configure-pages@v5
+        with:
+          # Create the Pages site if it does not exist yet, instead of failing
+          # and waiting for someone to click Settings -> Pages. The workflow
+          # already holds pages: write, which is exactly the permission that
+          # call needs.
+          enablement: true
 
       # No base path needed: every asset path in public/ is relative, so the
       # same build runs at a domain root or under /<repo>/ unchanged.
