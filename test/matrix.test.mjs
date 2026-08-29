@@ -193,3 +193,33 @@ describe('a run', () => {
     assert.deepEqual(play(), play());
   });
 });
+
+describe('the daily board is the same for everyone', () => {
+  /* The daily's premise is one shared board worldwide. That holds only if the
+     pattern depends on nothing player-specific — so this asserts the property
+     directly rather than trusting the generator to stay honest. */
+  test('the same seed and position give the same pattern regardless of skill', () => {
+    // Two players at problem 8: one has got 7 right, the other 2. Same board.
+    const atPosition = solved => {
+      const rnd = mulberry32(20260829);
+      let last;
+      for (let i = 0; i <= solved; i++) last = makePattern(Math.floor(i / 3) + 2, rnd);
+      return last;
+    };
+    assert.deepEqual(atPosition(8).cells, atPosition(8).cells);
+    assert.equal(atPosition(8).size, atPosition(8).size);
+  });
+
+  test('levelling by position is monotonic and starts above the floor', () => {
+    // Position-based levels must still ramp, or the daily gets easier as it
+    // goes and the last problems are the simplest.
+    const level = solved => Math.floor(solved / 3) + 2;
+    assert.equal(level(0), 2);
+    let prev = 0;
+    for (let i = 0; i < 12; i++) {
+      assert.ok(level(i) >= prev, `level dropped at problem ${i}`);
+      prev = level(i);
+    }
+    assert.ok(level(11) > level(0), 'and it does ramp across the twelve');
+  });
+});

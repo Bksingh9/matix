@@ -40,8 +40,18 @@ export const pick = a => a[Math.floor(RND() * a.length)];
    this only decides which level the player is on and hands over the RNG — so
    the daily challenge gets a reproducible board with no extra work. */
 function genMatrix() {
-  const level = S.correct + 1;
-  const p = makePattern(level, rnd, { consecutiveFails: S.matrixFails || 0 });
+  /* Level normally tracks clears, so the grid grows as the player proves they
+     can hold more.
+
+     In the daily it must track POSITION instead. Two players reach problem 8
+     having got a different number right, so levelling by clears would hand
+     them different grid sizes and different patterns — and the shared board,
+     which is the entire point of a daily, would be a lie. The adaptive ease is
+     dropped there for the same reason: it is per-player by definition. */
+  const level = S.isDaily ? Math.floor(S.solved / 3) + 2 : S.correct + 1;
+  const p = makePattern(level, rnd, {
+    consecutiveFails: S.isDaily ? 0 : (S.matrixFails || 0)
+  });
   return {
     kind: 'grid',
     // No arithmetic happened. Sending an operation would inflate a bucket and
@@ -151,7 +161,21 @@ export function fromDrill(p) {
 }
 
 export function generate() {
-  if (S.isDaily) { const r = RND(); return r < .6 ? genPad() : (r < .85 ? genVerify() : genOperator()); }
+  /* The daily mixes formats so twelve problems do not read as one drill, and
+     every draw comes from the seeded RNG — so the mix, the numbers AND the
+     grid patterns are identical for every player worldwide. That is the whole
+     premise of a shared board.
+
+     Matrix is in the mix at ~1 in 6: enough that a memory round shows up in
+     most dailies, rare enough that it stays a change of pace rather than a
+     different game. */
+  if (S.isDaily) {
+    const r = RND();
+    if (r < .50) return genPad();
+    if (r < .72) return genVerify();
+    if (r < .84) return genOperator();
+    return genMatrix();
+  }
   if (S.game === 'verify') return genVerify();
   if (S.game === 'operator') return genOperator();
   if (S.game === 'target') return genTarget();
