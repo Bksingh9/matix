@@ -7,7 +7,7 @@ import { GAMES } from './games.js';
 import { setScreen, renderMenu, syncSound, updAnswer, setChipData } from './ui.js';
 import {
   gateGame, startRun, endRun, submitPad, submitTF, submitOp,
-  chipTap, digit, loop, share, setAttemptSink, setRunSink, setResultsHook
+  chipTap, gridTap, digit, loop, share, setAttemptSink, setRunSink, setResultsHook
 } from './engine.js';
 import { recordAttempt, submitRun, flush, initRunLog, setProgressSink } from './runlog.js';
 import { initProgress, refreshProgress, progressView, renderXpPanel, openProfile, closeProfile, toast } from './progress.js';
@@ -74,6 +74,13 @@ function bind() {
   $('#acct-delete').addEventListener('click', askDelete);
   $('#acct-delete-no').addEventListener('click', cancelDelete);
   $('#acct-delete-yes').addEventListener('click', confirmDelete);
+
+  // The memory grid is rebuilt every deal and changes size as you level up,
+  // so it has to be delegated too.
+  $('#panel-grid').addEventListener('click', e => {
+    const tile = e.target.closest('.tile[data-cell]');
+    if (tile) gridTap(+tile.dataset.cell);
+  });
 
   // game grid — delegated
   $('#game-grid').addEventListener('click', e => {

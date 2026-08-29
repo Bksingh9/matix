@@ -69,7 +69,7 @@ create trigger on_auth_user_created
 create table if not exists public.runs (
   id           bigserial primary key,
   user_id      uuid not null references auth.users(id) on delete cascade,
-  game         text not null,              -- blitz|survival|verify|operator|target|recall|zen|daily|drill|import
+  game         text not null,              -- blitz|survival|verify|operator|target|recall|matrix|zen|daily|drill|import
   difficulty   text not null,
   score        integer not null,
   solved       integer not null,

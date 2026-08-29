@@ -445,3 +445,40 @@ body{
   color:#241905;background:var(--amber);border-radius:9px;padding:9px 13px;}
 .ib-x{flex:none;width:26px;height:26px;border-radius:7px;color:var(--ink-faint);display:flex;align-items:center;justify-content:center;font-size:13px;}
 .ib-x:hover{color:var(--ink);}
+
+/* ============ MEMORY MATRIX ============ */
+/* The grid is square and sized to the shorter axis, so a 6x6 on a small phone
+   still shows square tiles rather than letterboxed ones. */
+#panel-grid{
+  display:none;
+  grid-template-columns:repeat(var(--grid-n,3),1fr);
+  gap:8px;
+  width:min(88vw,min(52vh,420px));
+  aspect-ratio:1;
+  margin:0 auto;
+  padding:4px;
+}
+#panel-grid.show{display:grid;}
+#panel-grid .tile{
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:var(--surface);
+  transition:background .12s,border-color .12s,transform .08s;
+  min-height:0;           /* let the grid, not the content, set tile height */
+  touch-action:manipulation;
+}
+#panel-grid .tile:active{transform:scale(.94);}
+/* Lit during the reveal window. */
+#panel-grid .tile.lit{background:var(--amber);border-color:var(--amber);}
+/* Correctly recalled. */
+#panel-grid .tile.hit{background:var(--amber);border-color:var(--amber);}
+/* The tile that ended the round. */
+#panel-grid .tile.miss{background:var(--coral);border-color:var(--coral);}
+/* Shown after a miss: what the pattern actually was. Being told the answer is
+   how a memory game teaches; a bare "wrong" teaches nothing. */
+#panel-grid .tile.was{border-color:var(--amber);background:var(--amber-soft);}
+
+@media (prefers-reduced-motion:reduce){
+  #panel-grid .tile{transition:none;}
+  #panel-grid .tile:active{transform:none;}
+}

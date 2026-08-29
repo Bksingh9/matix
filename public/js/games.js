@@ -1,5 +1,6 @@
 import { S } from './state.js';
 import { OPSYM, mulberry32 } from './util.js';
+import { makePattern } from './matrix.js';
 
 /* ============================================================ CATALOGUE */
 export const GAMES = {
@@ -9,6 +10,7 @@ export const GAMES = {
   operator: { name: 'Operator', glyph: '⁂', pro: false, desc: 'The numbers are given. Find the missing sign.',   input: 'ops',   timer: 'run',     duration: 60 },
   target:   { name: 'Target',   glyph: '◎', pro: true,  desc: 'Combine numbers to hit the target exactly.',      input: 'chips', timer: 'run',     duration: 90 },
   recall:   { name: 'Recall',   glyph: '◈', pro: true,  desc: 'A number flashes. Type it back from memory.',     input: 'pad',   timer: 'problem', lives: 3 },
+  matrix:   { name: 'Matrix',   glyph: '⬛', pro: false, desc: 'A pattern flashes on the grid. Tap it back.',    input: 'grid',  timer: 'problem', lives: 3 },
   zen:      { name: 'Zen',      glyph: '∞', pro: false, desc: 'No clock, no lives. Just repetitions.',           input: 'pad',   timer: 'none' },
   // Practice, not a test: no clock, no lives lost. The set comes from the
   // server pre-generated, and the band sets the difficulty — the difficulty
@@ -33,6 +35,25 @@ export const ri = (a, b) => Math.floor(RND() * (b - a + 1)) + a;
 export const pick = a => a[Math.floor(RND() * a.length)];
 
 /* ============================================================ GENERATORS */
+
+/* Memory Matrix. The rules live in matrix.js, which is pure and unit-tested;
+   this only decides which level the player is on and hands over the RNG — so
+   the daily challenge gets a reproducible board with no extra work. */
+function genMatrix() {
+  const level = S.correct + 1;
+  const p = makePattern(level, rnd, { consecutiveFails: S.matrixFails || 0 });
+  return {
+    kind: 'grid',
+    // No arithmetic happened. Sending an operation would inflate a bucket and
+    // quietly corrupt the weak-spot report, which is the thing Pro sells.
+    op: null, a: null, b: null, answer: null,
+    pattern: p,
+    showMs: p.revealMs,
+    sub: 'Memorise',
+    small: true,
+    html: p.size + ' × ' + p.size + ' <span class="op">·</span> ' + p.count + ' tiles'
+  };
+}
 export function bands(d) {
   return ({
     easy:   { add: [1, 20],    sub: [5, 30],     mA: [2, 9],   mB: [2, 9],   dB: [2, 9],   dQ: [2, 9] },
@@ -129,6 +150,7 @@ export function generate() {
   if (S.game === 'verify') return genVerify();
   if (S.game === 'operator') return genOperator();
   if (S.game === 'target') return genTarget();
+  if (S.game === 'matrix') return genMatrix();
   if (S.game === 'recall') return genRecall();
   return genPad();
 }

@@ -118,14 +118,48 @@ export const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '
 
 /* ============================================================ GAME */
 export function showPanel(kind) {
-  ['pad', 'tf', 'ops', 'chips'].forEach(p => $('#panel-' + p).classList.remove('show'));
-  const map = { pad: 'pad', recall: 'pad', tf: 'tf', ops: 'ops', chips: 'chips' };
+  ['pad', 'tf', 'ops', 'chips', 'grid'].forEach(p => $('#panel-' + p).classList.remove('show'));
+  const map = { pad: 'pad', recall: 'pad', tf: 'tf', ops: 'ops', chips: 'chips', grid: 'grid' };
   $('#panel-' + (map[kind] || 'pad')).classList.add('show');
 }
 
 export function renderChips(p) {
   $('#panel-chips').innerHTML = p.pool.map((n, i) => '<button class="chipkey" data-i="' + i + '">' + n + '</button>').join('')
     + '<button class="chipkey" data-clear="1" style="grid-column:span 3;color:var(--ink-dim);font-size:12px;letter-spacing:.12em;">CLEAR</button>';
+}
+
+/* The memory grid. `lit` draws the pattern for the reveal window; after that
+   the same tiles are drawn blank and the player taps from memory.
+
+   Rebuilt rather than diffed on each deal: the grid changes size as the
+   player levels up, and a full rebuild is both simpler and imperceptible at
+   this scale. */
+export function renderGrid(p, lit) {
+  const host = $('#panel-grid');
+  if (!host) return;
+  host.style.setProperty('--grid-n', p.size);
+  host.innerHTML = Array.from({ length: p.size * p.size }, (_, i) =>
+    '<button class="tile' + (lit && p.cells.includes(i) ? ' lit' : '') + '"'
+    + ' data-cell="' + i + '"'
+    // The reveal is not interactive, and a screen reader should not offer it.
+    + (lit ? ' tabindex="-1" aria-hidden="true"' : ' aria-label="Tile ' + (i + 1) + '"')
+    + '></button>').join('');
+}
+
+/* Mark one tile as the player taps. Kept separate from renderGrid so a tap
+   never rebuilds the grid under the player's finger mid-round. */
+export function markTile(i, status) {
+  const el = $('#panel-grid .tile[data-cell="' + i + '"]');
+  if (el) el.classList.add(status === 'wrong' ? 'miss' : 'hit');
+}
+
+/* On a miss, show what it actually was. Being told the answer is how a memory
+   game teaches; a bare "wrong" teaches nothing. */
+export function revealGrid(p) {
+  for (const c of p.cells) {
+    const el = $('#panel-grid .tile[data-cell="' + c + '"]');
+    if (el && !el.classList.contains('hit')) el.classList.add('was');
+  }
 }
 
 export function updAnswer() {

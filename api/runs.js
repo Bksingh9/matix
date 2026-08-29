@@ -13,7 +13,7 @@ import { applyRun } from '../lib/progress-store.js';
  * integrity only starts to matter once there is a public leaderboard; until
  * then, validate the shape and move on. */
 
-const GAMES = new Set(['blitz', 'survival', 'verify', 'operator', 'target', 'recall', 'zen', 'daily', 'drill', 'import']);
+const GAMES = new Set(['blitz', 'survival', 'verify', 'operator', 'target', 'recall', 'matrix', 'zen', 'daily', 'drill', 'import']);
 const KINDS = new Set(['pad', 'tf', 'ops', 'chips', 'recall']);
 const DIFFS = new Set(['easy', 'medium', 'hard', 'expert', 'mixed']);
 const MAX_ATTEMPTS = 500;

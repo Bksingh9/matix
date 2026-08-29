@@ -43,6 +43,7 @@ const SHELL_URLS = [
   './js/runlog.js',
   './js/progress.js',
   './js/progression.js',
+  './js/matrix.js',
   './js/social.js',
   './js/install.js',
   './js/native.js',

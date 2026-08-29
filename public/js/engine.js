@@ -1,5 +1,6 @@
 import { S, saveStats, saveMeter, canRun } from './state.js';
 import { GAMES, generate, diff, seedFromDate, useSystemRandom } from './games.js';
+import { judgeTap } from './matrix.js';
 import { audio, beep } from './audio.js';
 import { tap } from './native.js';
 import { track } from './analytics.js';
@@ -7,6 +8,7 @@ import { $, now, today, yesterday, OPSYM, fmt } from './util.js';
 import { openPaywall, openReward } from './paywall.js';
 import {
   setScreen, renderRuns, renderResults, showPanel, renderChips, updAnswer,
+  renderGrid, markTile, revealGrid,
   flashGood, flashBad, updScore, updStreak, updCenter, updBar, syncSound, gridString
 } from './ui.js';
 
@@ -88,6 +90,18 @@ export function nextProblem() {
       S.memorizing = false; S.locked = false; S.pStart = now();
       if (GAMES[S.game].timer === 'problem') S.pTimeLeft = S.pLimit;
     }, p.showMs);
+  } else if (p.kind === 'grid') {
+    // Same reveal-then-recall shape as Recall, but the thing being held in
+    // memory is a shape rather than a number.
+    renderGrid(p.pattern, true);
+    S.memorizing = true; S.locked = true; beep('tick');
+    setTimeout(() => {
+      if (S.screen !== 'game' || S.problem !== p) return;
+      renderGrid(p.pattern, false);
+      $('#subprompt').textContent = 'Tap what lit up';
+      S.memorizing = false; S.locked = false; S.pStart = now();
+      if (GAMES[S.game].timer === 'problem') S.pTimeLeft = S.pLimit;
+    }, p.showMs);
   } else S.pStart = now();
   updCenter(); updBar();
 }
@@ -99,6 +113,32 @@ export const setDrillSource = fn => { drillSource = fn; };
 function nextSource() {
   if (S.game === 'drill' && drillSource) return drillSource();
   return generate();
+}
+
+/* A tap on the memory grid. Judged the moment it lands rather than at the
+   end: waiting for a submit would let a player tap every tile and always
+   clear the board. */
+export function gridTap(i) {
+  if (S.locked || S.memorizing || S.screen !== 'game') return;
+  const p = S.problem;
+  if (!p || p.kind !== 'grid') return;
+
+  const r = judgeTap(p.pattern, S.picked, i);
+  if (r.status === 'ignored') return;
+  S.picked = r.tapped;
+  markTile(i, r.status);
+
+  if (r.status === 'wrong') {
+    S.locked = true; S.solved++;
+    // Feeds the next deal's reveal window: two in a row hands time back.
+    S.matrixFails = (S.matrixFails || 0) + 1;
+    revealGrid(p.pattern);
+    bad('Missed', (now() - S.pStart) / 1000, null);
+  } else if (r.status === 'complete') {
+    S.locked = true; S.solved++;
+    S.matrixFails = 0;
+    good((now() - S.pStart) / 1000, null);
+  }
 }
 
 /* ============================================================ SCORING */
