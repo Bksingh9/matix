@@ -1,6 +1,6 @@
 import { S, saveStats, saveMeter, canRun } from './state.js';
 import { GAMES, generate, diff, seedFromDate, useSystemRandom } from './games.js';
-import { judgeTap } from './matrix.js';
+import { judgeTap, recallSecondsFor } from './matrix.js';
 import { audio, beep } from './audio.js';
 import { tap } from './native.js';
 import { track } from './analytics.js';
@@ -100,7 +100,13 @@ export function nextProblem() {
       renderGrid(p.pattern, false);
       $('#subprompt').textContent = 'Tap what lit up';
       S.memorizing = false; S.locked = false; S.pStart = now();
-      if (GAMES[S.game].timer === 'problem') S.pTimeLeft = S.pLimit;
+      // The clock starts when the pattern hides, not when it appeared, and
+      // the budget is sized to the number of tiles rather than inherited from
+      // the arithmetic modes.
+      if (GAMES[S.game].timer === 'problem') {
+        S.pLimit = recallSecondsFor(p.pattern.count, S.level);
+        S.pTimeLeft = S.pLimit;
+      }
     }, p.showMs);
   } else S.pStart = now();
   updCenter(); updBar();
@@ -240,7 +246,16 @@ function timeoutProblem() {
   logAttempt({ correct: false, timedOut: true, elapsedMs: Math.round(S.pLimit * 1000), given: null });
   S.lives--;
   updCenter(); beep('no'); tap('error');
-  flashBad(S.problem.kind === 'recall' ? S.problem.digits : String(S.problem.answer), 'Time');
+  if (S.problem.kind === 'grid') {
+    // There is no "answer" to show — the pattern is the answer, so show it,
+    // the same way a wrong tap does. Without this the answer line reads
+    // "= null", which is the message a timed-out player sees most often.
+    S.matrixFails = (S.matrixFails || 0) + 1;
+    revealGrid(S.problem.pattern);
+    flashBad('Too slow', 'Time');
+  } else {
+    flashBad(S.problem.kind === 'recall' ? S.problem.digits : String(S.problem.answer), 'Time');
+  }
   setTimeout(() => { if (S.lives <= 0) endRun('dead'); else nextProblem(); }, 820);
 }
 

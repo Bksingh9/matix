@@ -155,14 +155,27 @@ describe('the client is never believed', () => {
   });
 
   test('the plan comes from the product id, not from anything the client says', async () => {
-    // The client claims lifetime; the product is the monthly one.
+    // The client asks for the product Google will actually confirm, but also
+    // sends plan/status/isPro hoping one of them is believed. None is.
     const res = await call({
-      platform: 'android', productId: 'mindsharp.pro.monthly', purchaseToken: 'valid-token-123',
+      platform: 'android', productId: 'mindsharp.pro.yearly', purchaseToken: 'valid-token-123',
       plan: 'lifetime', status: 'active', isPro: true
     });
     assert.equal(res.statusCode, 200);
-    assert.equal(ent().plan, 'monthly', 'the mapping wins');
+    assert.equal(ent().plan, 'yearly', 'the product mapping wins');
     assert.notEqual(ent().plan, 'lifetime');
+  });
+
+  test('claiming a different product than Google confirms is refused', async () => {
+    // The mock returns a yearly subscription for this token. Claiming the
+    // monthly one is a mislabelling attempt: access would still end on
+    // Google's real expiry, but the plan on the account and the receipt would
+    // both be wrong. verifyApple already checked this; verifyAndroid did not.
+    const res = await call({
+      platform: 'android', productId: 'mindsharp.pro.monthly', purchaseToken: 'valid-token-123'
+    });
+    assert.equal(res.statusCode, 400);
+    assert.equal(res.json.error, 'product_mismatch');
   });
 });
 

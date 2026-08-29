@@ -68,7 +68,7 @@ function run(sql, { db = DB, allowFail = false, label = '' } = {}) {
 
 const MIGRATIONS = [
   '001_schema.sql', '002_rls.sql', '003_views.sql',
-  '005_progression.sql', '006_store_purchases.sql'
+  '005_progression.sql', '006_store_purchases.sql', '007_fix_profiles_rls.sql'
 ];
 
 console.log(`Postgres reachable via: ${CMD.join(' ')}`);

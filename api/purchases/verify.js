@@ -2,6 +2,7 @@ import { ok, json, methodGuard, readJson, unauthorized, badRequest, serverError,
 import { userFromRequest, touchProfile } from '../../lib/auth.js';
 import { guard } from '../../lib/ratelimit.js';
 import { supabaseAdmin } from '../../lib/supabase.js';
+import { createHash } from 'node:crypto';
 import * as play from '../../lib/playstore.js';
 import * as apple from '../../lib/appstore.js';
 
@@ -120,6 +121,16 @@ async function verifyAndroid({ productId, plan, token }) {
     return { error: 'purchase_not_active', status: 400 };
   }
 
+  /* Check the product Google returned is the product being claimed — the same
+     check verifyApple already does. Without it a monthly buyer can claim the
+     yearly plan and have it written to their entitlement. Access still ends on
+     Google's real expiry, so this is a mislabelling rather than free Pro, but
+     the label is what the account sheet and the receipts show. */
+  if (result.productId && result.productId !== productId) {
+    console.warn(`[iap] play product mismatch: ${result.productId} vs claimed ${productId}`);
+    return { error: 'product_mismatch', status: 400 };
+  }
+
   // Google auto-refunds anything unacknowledged after three days. Failing to
   // acknowledge is the difference between a sale and a refund the customer
   // never asked for, so it happens before we report success.
@@ -132,8 +143,11 @@ async function verifyAndroid({ productId, plan, token }) {
     plan,
     status: result.status,
     expiresAt: result.expiresAt,
-    // The token is stable per purchase and is what a duplicate would repeat.
-    txnId: `play:${token.slice(0, 120)}`
+    /* Hashed rather than truncated. A Play token is long and its prefix is
+       not guaranteed unique, so slicing it risks two different purchases
+       colliding in entitlements_store_txn_unique — which would refuse the
+       second buyer their product. */
+    txnId: `play:${createHash('sha256').update(token).digest('hex')}`
   };
 }
 

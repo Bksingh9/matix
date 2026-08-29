@@ -15,6 +15,7 @@ alter table public.webhook_events enable row level security;
 alter table public.rate_limits    enable row level security;
 
 drop policy if exists "own profile"      on public.profiles;
+drop policy if exists "read own profile" on public.profiles;
 drop policy if exists "read own ent"     on public.entitlements;
 drop policy if exists "own runs r"       on public.runs;
 drop policy if exists "own runs w"       on public.runs;
@@ -24,7 +25,17 @@ drop policy if exists "own drills"       on public.drills;
 drop policy if exists "own daily w"      on public.daily_scores;
 drop policy if exists "daily leaderboard readable" on public.daily_scores;
 
-create policy "own profile"    on public.profiles     for all    using (auth.uid() = id)      with check (auth.uid() = id);
+/* SELECT only, deliberately.
+   RLS is row-level, not column-level, so `for all` let a user rewrite ANY
+   column of their own row — including `email`. Squatting a victim's address
+   there hands them the victim's purchase, because the webhook falls back to
+   matching on email when a checkout carries no user id. Same hole let a user
+   set `handle` directly, skipping the validation api/league.js performs.
+   Nothing in public/js/ ever writes profiles: every write is server-side
+   through handle_new_user(), touchProfile() and api/league.js, all of which
+   use the service role. So the client needs no write access at all. */
+create policy "read own profile" on public.profiles for select using (auth.uid() = id);
+revoke insert, update, delete on public.profiles from anon, authenticated;
 create policy "read own ent"   on public.entitlements for select using (auth.uid() = user_id);
 -- no insert/update/delete policy on entitlements: service role only, by design.
 create policy "own runs r"     on public.runs         for select using (auth.uid() = user_id);

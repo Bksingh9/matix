@@ -160,7 +160,7 @@ async function resolveUser(db, hints, payload) {
 
   if (hints.email) {
     const { data } = await db.from('profiles')
-      .select('id').ilike('email', hints.email).limit(1).maybeSingle();
+      .select('id').eq('email', hints.email.toLowerCase()).limit(1).maybeSingle();
     if (data) return data.id;
   }
 

@@ -83,6 +83,21 @@ export function makePattern(level, rnd = Math.random, opts = {}) {
   };
 }
 
+/* How long to allow for tapping the pattern back.
+ *
+ * The arithmetic modes budget one shrinking window per problem, because there
+ * you type one number. Here you tap `count` tiles from memory, and a fixed
+ * budget becomes impossible the moment the grid grows: 16 tiles in 5.5s is
+ * nearly 3 taps a second *while recalling*, so the clock would end every run
+ * and the curve above would never get to matter.
+ *
+ * Scales with the work: a base to orient on the grid, plus per-tile time that
+ * tightens as the player gets better. */
+export function recallSecondsFor(count, level = 1) {
+  const perTile = Math.max(0.55, 0.95 - level * 0.012);
+  return Math.round((1.8 + count * perTile) * 10) / 10;
+}
+
 /* Score rewards the size of what you held in memory and how fast you put it
    back, then multiplies by the streak. Deliberately not time-only: a 6x6
    pattern recalled slowly is a harder thing than a 3x3 recalled fast. */

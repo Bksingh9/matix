@@ -168,6 +168,49 @@ select pg_temp.must_see(
   $q$select 1 from public.entitlements$q$, 0);
 
 \echo ''
+\echo '-- profiles: readable by their owner, writable by nobody ------------'
+
+/* This block exists because its absence hid a payment-theft bug. The original
+   policy was `for all`, and RLS is row-level rather than column-level, so a
+   user could rewrite their own email to a victim's and collect the victim's
+   purchase through the webhook's email fallback. 26 RLS checks passed while
+   that was live, because not one of them touched profiles. */
+
+select pg_temp.must_affect_none(
+  'alice squats bob''s email to steal his purchase',
+  'authenticated', '11111111-1111-4111-8111-111111111111',
+  $q$update public.profiles set email = 'bob@example.com'
+     where id = '11111111-1111-4111-8111-111111111111'$q$);
+
+select pg_temp.must_affect_none(
+  'alice sets a handle directly, skipping the endpoint''s validation',
+  'authenticated', '11111111-1111-4111-8111-111111111111',
+  $q$update public.profiles set handle = '<img src=x onerror=alert(1)>'
+     where id = '11111111-1111-4111-8111-111111111111'$q$);
+
+select pg_temp.must_affect_none(
+  'alice deletes her profile to force the webhook down the email path',
+  'authenticated', '11111111-1111-4111-8111-111111111111',
+  $q$delete from public.profiles
+     where id = '11111111-1111-4111-8111-111111111111'$q$);
+
+select pg_temp.must_fail(
+  'alice inserts a second profile row',
+  'authenticated', '11111111-1111-4111-8111-111111111111',
+  $q$insert into public.profiles (id, email)
+     values ('33333333-3333-4333-8333-333333333333', 'spoof@example.com')$q$);
+
+select pg_temp.must_see(
+  'alice reads her own profile', 'authenticated', '11111111-1111-4111-8111-111111111111',
+  $q$select 1 from public.profiles
+     where id = '11111111-1111-4111-8111-111111111111'$q$, 1);
+
+select pg_temp.must_see(
+  'alice reads bob''s profile', 'authenticated', '11111111-1111-4111-8111-111111111111',
+  $q$select 1 from public.profiles
+     where id = '22222222-2222-4222-8222-222222222222'$q$, 0);
+
+\echo ''
 \echo '-- gameplay data: alice must not read or forge bob''s ----------------'
 
 select pg_temp.must_see(
