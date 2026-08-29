@@ -11,6 +11,29 @@ Lemon Squeezy as merchant of record.
 It also ships as an installable PWA and as native Android and iOS apps —
 Capacitor shells around the same `public/` build, with no second codebase.
 
+## Play it
+
+**https://rawcdn.githack.com/Bksingh9/matix/3edfcb9a523febdfc1ff23214947e4c72b3c4a39/public/index.html**
+
+Opens on a phone or a desktop, installs to a home screen, and works offline
+after the first load. No account needed — every mode, the daily challenge,
+streaks, XP and achievements run with no backend at all.
+
+The url pins a commit sha on purpose. The same host on a *branch* url serves
+a mutable, per-file cache: the first time this was tried it handed out a
+current `index.html` against a `theme.js` three commits old, converging one
+file at a time over several minutes. A version mix boots fine and misbehaves
+somewhere you are not looking, which is worse than an outage. `npm run
+verify:deploy` fetches every file from a deployed url and fails on any that
+does not match the local commit byte for byte, or that is served with a
+Content-Type an ES module will not load under.
+
+Signing in, Pro, the weak-spot report and the leaderboards need the serverless
+functions, so they are live only on a deploy that has them — see **Putting it
+somewhere** below. On a static host the client treats an unreachable API as
+"anonymous, free", which is the correct reading for a demo and never grants
+Pro.
+
 - `FREE-STACK.md` — running the whole thing on free tiers, and where "free" has a catch
 - `NOTICE.md` — copyright: public to read, not licensed for reuse
 - `MINDSHARP_BUILD_SPEC.md` — the build brief this was implemented against
@@ -219,6 +242,7 @@ work; clicking the setting once is simpler.
 | `npm run verify:sql` | Applies the migrations to a throwaway Postgres and proves RLS holds — no credentials needed |
 | `npm run verify:android` | Builds the Android app and checks the APK exists |
 | `npm run smoke -- <url>` | Plays a **deployed** site in a real browser. Run automatically after every Pages deploy. |
+| `npm run verify:deploy -- <url>` | Proves a deployed url is serving *this* commit — every file byte-for-byte, and a Content-Type each module can load under. Defaults to the pinned githack url. |
 
 ## Retention, and why it is built this way
 

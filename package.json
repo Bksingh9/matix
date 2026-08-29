@@ -23,6 +23,7 @@
     "verify:sql": "node scripts/verify-sql.mjs",
     "verify:android": "node scripts/verify-android.mjs",
     "smoke": "node scripts/smoke-live.mjs",
+    "verify:deploy": "node scripts/verify-deploy.mjs",
     "store:shots": "node scripts/store-shots.mjs",
     "store:feature": "node scripts/store-feature.mjs",
     "check:events": "node scripts/check-events.mjs",
