@@ -25,12 +25,45 @@ So the first version costs nothing and depends on nobody:
 Both host proprietary code on the free tier — the copyright position in
 `NOTICE.md` costs you nothing here.
 
-**Enabling Pages** is one setting: *Settings → Pages → Source: GitHub Actions*.
-Until then the deploy workflow fails at `configure-pages`, which is the only
-step in it that fails.
+**Pages is live** at <https://bksingh9.github.io/matix/>, deployed by
+`.github/workflows/pages.yml` on every push to the branch.
+
+Two traps, both already hit on this repo:
+
+*Enabling it is a manual click* — *Settings → Pages → Source: GitHub Actions*.
+It cannot be automated. `configure-pages` has an `enablement: true` input for
+exactly this and the Actions token still gets "Resource not accessible by
+integration": creating a Pages site needs repo-admin rights that token does not
+carry. Neither the REST API nor a browser gets round it, because the browser
+route needs a logged-in session.
+
+*The starter workflow will eat your site.* Enabling Pages offers a Jekyll
+workflow. It builds `source: ./` — the repository root — so it renders
+`README.md` and publishes that **over** your app. Both workflows share the
+`concurrency: pages` group, so which one wins is whichever finishes last. If
+Pages ever serves a page titled `MindSharp | matix` instead of
+`MindSharp — brain fitness, timed`, that is what happened. Delete
+`.github/workflows/jekyll-gh-pages.yml`. `npm run verify:deploy -- <url>`
+catches it in seconds.
 
 What Stage 0 does not have: accounts, cross-device sync, the weak-spot report,
 leaderboards, and anything paid.
+
+### The rest of the GitHub free tier this project uses
+
+All free on a public repository, all already wired up:
+
+| | |
+|---|---|
+| **Actions** | Unlimited minutes on public repos. Runs the unit and e2e suites, applies the migrations to a real Postgres service container, builds the Android app, deploys, then plays the deployed site. |
+| **Pages** | The host above. 1 GB site, 100 GB/month soft bandwidth limit — a static game of this size will not approach either. |
+| **Postgres in CI** | `services: postgres` gives `verify:sql` a real database, so RLS is proven on every commit without a Supabase project. |
+| **Dependabot / secret scanning** | Free on public repos, worth turning on in Settings → Security. |
+| **Releases** | Free hosting for the signed `.aab`/`.apk` so testers can install without Play. |
+| **raw.githack.com** | Not GitHub, but free and needs no account — serves any commit of a public repo with correct MIME types. Useful as a fallback host. Pin a commit sha via `rawcdn.githack.com`; a branch url serves a per-file cache that goes stale unevenly, which is worse than an outage because it boots. |
+
+The one thing the free tier will not give you is a backend. Stage 1 covers
+that.
 
 ## Stage 1 — accounts and the report, still free
 

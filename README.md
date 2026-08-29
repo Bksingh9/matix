@@ -11,6 +11,17 @@ Lemon Squeezy as merchant of record.
 It also ships as an installable PWA and as native Android and iOS apps —
 Capacitor shells around the same `public/` build, with no second codebase.
 
+- `FREE-STACK.md` — running the whole thing on free tiers, and where "free" has a catch
+- `NOTICE.md` — copyright: public to read, not licensed for reuse
+- `MINDSHARP_BUILD_SPEC.md` — the build brief this was implemented against
+- `MONETISATION_PLAN.md` — the commercial reasoning behind it
+- `LAUNCH.md` — where to distribute it, and how the money arrives
+- `docs/LEMONSQUEEZY.md` — where the live Lemon Squeezy API differs from the spec
+- `docs/DEVIATIONS.md` — every place the implementation departs from the spec, and why
+- `docs/MOBILE.md` — building and shipping the store apps
+- `docs/GO-LIVE.md` — the runbook for taking the first payment
+- `docs/BROWSER-TASKS.md` — the remaining go-live steps, written as prompts for a browser-driving agent
+
 ## Play it
 
 **https://bksingh9.github.io/matix/**
