@@ -186,6 +186,9 @@ variable to point the deployed site at a real backend.
 | `npm run e2e` | End-to-end tests in a real browser |
 | `npm run verify` | Everything |
 | `npm run verify:rls` | Proves row-level security against a live Supabase project |
+| `npm run verify:sql` | Applies the migrations to a throwaway Postgres and proves RLS holds — no credentials needed |
+| `npm run verify:android` | Builds the Android app and checks the APK exists |
+| `npm run smoke -- <url>` | Plays a **deployed** site in a real browser. Run automatically after every Pages deploy. |
 
 ## Retention, and why it is built this way
 

@@ -53,9 +53,31 @@ jobs:
   deploy:
     needs: build
     runs-on: ubuntu-latest
+    # deploy-pages@v4 requires the github-pages environment; without it the
+    # deploy is rejected before it starts.
     environment:
       name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  # Play the deployed site in a real browser. The e2e suite proves the code
+  # works against a local server; this proves the thing people actually visit
+  # works, which is a different claim and the one that catches a bad deploy —
+  # a missing asset, a wrong base path, a service worker serving a stale shell.
+  smoke:
+    needs: deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      # Pages serves the new commit a moment after the API reports success.
+      - run: sleep 15
+      - run: node scripts/smoke-live.mjs "${{ needs.deploy.outputs.url }}"
