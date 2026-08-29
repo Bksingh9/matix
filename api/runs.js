@@ -9,14 +9,24 @@ import { applyRun } from '../lib/progress-store.js';
 /* POST /api/runs — persist a finished run and its attempts in one transaction.
  *
  * Attempt rows are the dataset the entire Pro value proposition rests on, so
- * the validation here is about data integrity rather than anti-cheat. Score
- * integrity only starts to matter once there is a public leaderboard; until
- * then, validate the shape and move on. */
+ * most of the validation here is about data integrity.
+ *
+ * Score is different, and it changed: this used to say integrity "only starts
+ * to matter once there is a public leaderboard". That precondition is now
+ * false — /api/leaderboard and /api/league both ship, and daily_scores feeds
+ * the public board directly. An unbounded client number there is not a score,
+ * it is a text field. So the score is now bounded by what the engine could
+ * actually have paid out for the number of problems solved. */
 
 const GAMES = new Set(['blitz', 'survival', 'verify', 'operator', 'target', 'recall', 'matrix', 'zen', 'daily', 'drill', 'import']);
-const KINDS = new Set(['pad', 'tf', 'ops', 'chips', 'recall']);
+const KINDS = new Set(['pad', 'tf', 'ops', 'chips', 'recall', 'grid']);
 const DIFFS = new Set(['easy', 'medium', 'hard', 'expert', 'mixed']);
 const MAX_ATTEMPTS = 500;
+
+/* The most the engine can pay for one problem: the hardest band's base (38),
+   plus the full speed bonus (0.8x), times the top streak multiplier (3).
+   Anything above solved * this did not come from playing the game. */
+const MAX_POINTS_PER_PROBLEM = Math.ceil(38 * 1.8 * 3);   // 206
 
 export default async function handler(req, res) {
   if (!methodGuard(req, res, ['POST'])) return;
@@ -161,6 +171,14 @@ function validateRun(body) {
   }
   if (correct > solved) return { error: 'inconsistent_counts', detail: 'correct > solved' };
   if (bestStreak > solved) return { error: 'inconsistent_counts', detail: 'bestStreak > solved' };
+
+  /* Bound the score by what the engine could have paid for that many correct
+     answers. Refused rather than clamped: a clamped run still lands on the
+     leaderboard, just lower, so the cheat costs nothing to attempt. */
+  const ceiling = correct * MAX_POINTS_PER_PROBLEM;
+  if (score > ceiling) {
+    return { error: 'implausible_score', detail: `${score} > ${ceiling} for ${correct} correct` };
+  }
 
   const isDaily = body.isDaily === true;
   let dailyDate = null;

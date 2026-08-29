@@ -167,6 +167,27 @@ describe('validation', () => {
     }
   });
 
+  test('rejects a score the engine could not have paid', async () => {
+    // daily_scores feeds the public leaderboard directly, so an unbounded
+    // client number there is not a score, it is a text field.
+    const res = await call(baseRun({ solved: 10, correct: 10, wrong: 0, bestStreak: 10, score: 1_000_000 }));
+    assert.equal(res.statusCode, 400);
+    assert.equal(res.json.error, 'implausible_score');
+  });
+
+  test('accepts a strong but achievable score', async () => {
+    // The hardest band, full speed bonus, top streak multiplier, every answer
+    // correct. The bound must not punish someone who is simply very good.
+    const res = await call(baseRun({ solved: 30, correct: 30, wrong: 0, bestStreak: 30, score: 30 * 206 }));
+    assert.equal(res.statusCode, 200, JSON.stringify(res.json));
+  });
+
+  test('the score ceiling follows correct answers, not attempts', async () => {
+    // Padding `solved` must buy no headroom — only correct answers pay out.
+    const res = await call(baseRun({ solved: 500, correct: 1, wrong: 499, bestStreak: 1, score: 5000 }));
+    assert.equal(res.json.error, 'implausible_score');
+  });
+
   test('rejects internally inconsistent counts', async () => {
     let res = await call(baseRun({ solved: 5, correct: 9 }));
     assert.equal(res.json.error, 'inconsistent_counts');

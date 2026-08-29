@@ -94,7 +94,7 @@ create table if not exists public.attempts (
   id          bigserial primary key,
   run_id      bigint not null references public.runs(id) on delete cascade,
   user_id     uuid   not null references auth.users(id) on delete cascade,
-  kind        text   not null,             -- pad|tf|ops|chips|recall
+  kind        text   not null,             -- pad|tf|ops|chips|recall|grid
   op          char(1),                     -- + - * /   (null for recall)
   operand_a   integer,
   operand_b   integer,
