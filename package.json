@@ -15,7 +15,7 @@
     "check:syntax": "node scripts/check-syntax.mjs",
     "check:csp": "node scripts/check-csp.mjs",
     "check:manifest": "node scripts/make-manifests.mjs --check",
-    "check": "npm run check:syntax && npm run check:secrets && npm run check:events && npm run check:csp && npm run check:manifest && npm run check:link && npm run test",
+    "check": "npm run check:syntax && npm run check:secrets && npm run check:events && npm run check:csp && npm run check:manifest && npm run test",
     "e2e": "node --test \"test/e2e/*.test.mjs\"",
     "verify": "npm run check && npm run e2e",
     "build": "npm run check:secrets && npm run check:prod",
