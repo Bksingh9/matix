@@ -18,7 +18,7 @@ import { applyRun } from '../lib/progress-store.js';
  * it is a text field. So the score is now bounded by what the engine could
  * actually have paid out for the number of problems solved. */
 
-const GAMES = new Set(['blitz', 'survival', 'verify', 'operator', 'target', 'recall', 'matrix', 'zen', 'daily', 'drill', 'import']);
+const GAMES = new Set(['blitz', 'survival', 'verify', 'operator', 'target', 'recall', 'matrix', 'mrush', 'mzen', 'zen', 'daily', 'drill', 'import']);
 const KINDS = new Set(['pad', 'tf', 'ops', 'chips', 'recall', 'grid']);
 const DIFFS = new Set(['easy', 'medium', 'hard', 'expert', 'mixed']);
 const MAX_ATTEMPTS = 500;

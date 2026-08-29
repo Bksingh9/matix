@@ -11,6 +11,10 @@ export const GAMES = {
   target:   { name: 'Target',   glyph: '◎', pro: true,  desc: 'Combine numbers to hit the target exactly.',      input: 'chips', timer: 'run',     duration: 90 },
   recall:   { name: 'Recall',   glyph: '◈', pro: true,  desc: 'A number flashes. Type it back from memory.',     input: 'pad',   timer: 'problem', lives: 3 },
   matrix:   { name: 'Matrix',   glyph: '⬛', pro: false, desc: 'A pattern flashes on the grid. Tap it back.',    input: 'grid',  timer: 'problem', lives: 3 },
+  // Same board, three pressures. Rush trades lives for a clock; Zen removes
+  // both, which is what makes it the mode to learn the game in.
+  mrush:    { name: 'Matrix Rush', glyph: '⧗', pro: false, desc: 'Sixty seconds. As many grids as you can hold.', input: 'grid', timer: 'run', duration: 60 },
+  mzen:     { name: 'Matrix Zen',  glyph: '◍', pro: false, desc: 'The grid, with no clock and nothing to lose.',  input: 'grid', timer: 'none' },
   zen:      { name: 'Zen',      glyph: '∞', pro: false, desc: 'No clock, no lives. Just repetitions.',           input: 'pad',   timer: 'none' },
   // Practice, not a test: no clock, no lives lost. The set comes from the
   // server pre-generated, and the band sets the difficulty — the difficulty
@@ -39,6 +43,9 @@ export const pick = a => a[Math.floor(RND() * a.length)];
 /* Memory Matrix. The rules live in matrix.js, which is pure and unit-tested;
    this only decides which level the player is on and hands over the RNG — so
    the daily challenge gets a reproducible board with no extra work. */
+/* Every variant deals the same board; only the pressure around it differs. */
+export const isMatrix = g => g === 'matrix' || g === 'mrush' || g === 'mzen';
+
 function genMatrix() {
   /* Level normally tracks clears, so the grid grows as the player proves they
      can hold more.
@@ -179,7 +186,7 @@ export function generate() {
   if (S.game === 'verify') return genVerify();
   if (S.game === 'operator') return genOperator();
   if (S.game === 'target') return genTarget();
-  if (S.game === 'matrix') return genMatrix();
+  if (isMatrix(S.game)) return genMatrix();
   if (S.game === 'recall') return genRecall();
   return genPad();
 }

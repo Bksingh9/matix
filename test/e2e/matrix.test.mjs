@@ -127,6 +127,57 @@ describe('memory matrix', () => {
     await ctx.close();
   });
 
+  test('Matrix Rush runs on a clock instead of lives', async () => {
+    const { page, ctx, errors } = await openApp(browser, srv.origin);
+    await page.click('.gcard[data-game="mrush"]');
+    await page.waitForSelector('#screen-game.active', { timeout: 8000 });
+    await page.waitForSelector('#panel-grid.show', { timeout: 5000 });
+    await waitForRecall(page);
+
+    // A miss must not cost a life — there are none. The clock is the pressure.
+    const p = await pattern(page);
+    const wrong = [...Array(p.size * p.size).keys()].find(i => !p.cells.includes(i));
+    await page.click(`#panel-grid .tile[data-cell="${wrong}"]`);
+    await page.waitForFunction(() => window.__mindsharp.S.wrong >= 1, null, { timeout: 5000 });
+
+    const s = await st(page);
+    assert.equal(s.screen, 'game', 'the run continues');
+    assert.ok(await page.evaluate(() => window.__mindsharp.S.timeLeft > 0), 'and the clock is running');
+    assert.deepEqual(errors, []);
+    await ctx.close();
+  });
+
+  test('Matrix Zen has nothing to lose — that is what makes it the way in', async () => {
+    const { page, ctx, errors } = await openApp(browser, srv.origin);
+    await page.click('.gcard[data-game="mzen"]');
+    await page.waitForSelector('#screen-game.active', { timeout: 8000 });
+    await page.waitForSelector('#panel-grid.show', { timeout: 5000 });
+
+    // Three misses in a row. In Classic that ends the run; here it must not.
+    for (let i = 0; i < 3; i++) {
+      await waitForRecall(page);
+      const p = await pattern(page);
+      const wrong = [...Array(p.size * p.size).keys()].find(c => !p.cells.includes(c));
+      await page.click(`#panel-grid .tile[data-cell="${wrong}"]`);
+      await page.waitForTimeout(900);
+    }
+    assert.equal((await st(page)).screen, 'game', 'still playing after three misses');
+    assert.deepEqual(errors, []);
+    await ctx.close();
+  });
+
+  test('every matrix variant deals a real grid', async () => {
+    for (const mode of ['matrix', 'mrush', 'mzen']) {
+      const { page, ctx, errors } = await openApp(browser, srv.origin);
+      await page.click(`.gcard[data-game="${mode}"]`);
+      await page.waitForSelector('#panel-grid.show', { timeout: 8000 });
+      const p = await pattern(page);
+      assert.ok(p.count >= 2 && p.size >= 3, `${mode} dealt ${p.count} on ${p.size}x${p.size}`);
+      assert.deepEqual(errors, [], `${mode} threw`);
+      await ctx.close();
+    }
+  });
+
   test('the mode is free — it is the hook, not the paywall', async () => {
     const { page, ctx } = await openApp(browser, srv.origin);
     const locked = await page.evaluate(() =>
