@@ -38,6 +38,11 @@
      Left at the dark default, a light theme grows a black bar above it. */
   var m=document.querySelector('meta[name="theme-color"]');
   if(m)m.setAttribute('content',C[t]);
+  /* And the manifest, which is what an installed app splashes on. Repointed
+     here rather than in theme.js so the browser fetches the right one once
+     instead of the default and then the real one. */
+  var l=document.querySelector('link[rel="manifest"]');
+  if(l&&t!=='ember')l.setAttribute('href','manifest-'+t+'.webmanifest');
 })();
 </script>
 </head>

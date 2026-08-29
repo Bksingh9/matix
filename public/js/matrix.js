@@ -64,8 +64,8 @@ export function revealMsFor(level, consecutiveFails = 0) {
    no cell can be picked twice. Sampling with rejection would bias toward
    whatever the RNG happens to favour when the grid is nearly full. */
 export function makePattern(level, rnd = Math.random, opts = {}) {
-  const size = opts.size || gridSizeFor(level);
-  const count = opts.count || tileCountFor(level, size);
+  const size = opts.size ?? gridSizeFor(level);
+  const count = opts.count ?? tileCountFor(level, size);
   const cells = Array.from({ length: size * size }, (_, i) => i);
 
   for (let i = cells.length - 1; i > 0; i--) {

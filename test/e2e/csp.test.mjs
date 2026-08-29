@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { chromium } from 'playwright';
 import http from 'node:http';
+import { blockWebfonts } from './helpers.mjs';
 import { readFile, stat } from 'node:fs/promises';
 import { join, extname, resolve } from 'node:path';
 
@@ -85,7 +86,7 @@ describe('content security policy', () => {
   });
 
   test('the app boots under the policy with no violations', async () => {
-    const ctx = await browser.newContext({ viewport: { width: 420, height: 900 } });
+    const ctx = await blockWebfonts(await browser.newContext({ viewport: { width: 420, height: 900 } }));
     const page = await ctx.newPage();
     const violations = [];
     page.on('console', m => {
@@ -102,7 +103,7 @@ describe('content security policy', () => {
   });
 
   test('a game is playable under the policy', async () => {
-    const ctx = await browser.newContext({ viewport: { width: 420, height: 900 } });
+    const ctx = await blockWebfonts(await browser.newContext({ viewport: { width: 420, height: 900 } }));
     const page = await ctx.newPage();
     const violations = [];
     page.on('console', m => { if (/Content Security Policy|Refused to/i.test(m.text())) violations.push(m.text()); });

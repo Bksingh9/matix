@@ -13,6 +13,8 @@ export const S = {
   score: 0, streak: 0, bestStreak: 0, mult: 1,
   solved: 0, correct: 0, wrong: 0, times: [], marks: [],
   lives: 3, level: 1, timeLeft: 60, pLimit: 7, pTimeLeft: 7,
+  // consecutive matrix misses; feeds the reveal-time easing in matrix.js
+  matrixFails: 0,
   runStart: 0, pStart: 0, locked: false, memorizing: false, isDaily: false,
   stats: null, meter: null,
   // server-backed, filled by entitlement.js / auth.js

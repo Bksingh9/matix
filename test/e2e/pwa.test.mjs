@@ -1,6 +1,6 @@
 import { test, before, after, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { serve, launch, openApp, playCorrectly } from './helpers.mjs';
+import { serve, launch, openApp, playCorrectly, blockWebfonts } from './helpers.mjs';
 import { readFileSync, readdirSync } from 'node:fs';
 import { resolve } from 'node:path';
 
@@ -189,7 +189,7 @@ describe('the install prompt', () => {
   });
 
   test('a standalone launch never shows it', async () => {
-    const ctx = await browser.newContext({ viewport: { width: 420, height: 900 } });
+    const ctx = await blockWebfonts(await browser.newContext({ viewport: { width: 420, height: 900 } }));
     // Make the page believe it is already installed before any script runs.
     await ctx.addInitScript(() => {
       const real = window.matchMedia.bind(window);
@@ -208,7 +208,7 @@ describe('the install prompt', () => {
 
 describe('launch shortcuts', () => {
   test('?go=daily opens the daily challenge directly', async () => {
-    const ctx = await browser.newContext({ viewport: { width: 420, height: 900 } });
+    const ctx = await blockWebfonts(await browser.newContext({ viewport: { width: 420, height: 900 } }));
     await ctx.route('**/api/**', r => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ authed: false, entitlement: { isPro: false, plan: 'free', status: 'none' }, limits: { freeRuns: 5, runsUsedToday: 0, runsLeft: 5 } }) }));
     const page = await ctx.newPage();
     await page.goto(srv.origin + '/?go=daily', { waitUntil: 'networkidle' });
@@ -220,7 +220,7 @@ describe('launch shortcuts', () => {
   });
 
   test('?go=blitz opens blitz', async () => {
-    const ctx = await browser.newContext({ viewport: { width: 420, height: 900 } });
+    const ctx = await blockWebfonts(await browser.newContext({ viewport: { width: 420, height: 900 } }));
     await ctx.route('**/api/**', r => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ authed: false, entitlement: { isPro: false, plan: 'free', status: 'none' }, limits: { freeRuns: 5, runsUsedToday: 0, runsLeft: 5 } }) }));
     const page = await ctx.newPage();
     await page.goto(srv.origin + '/?go=blitz', { waitUntil: 'networkidle' });
@@ -230,7 +230,7 @@ describe('launch shortcuts', () => {
   });
 
   test('an unknown or hostile ?go is ignored', async () => {
-    const ctx = await browser.newContext({ viewport: { width: 420, height: 900 } });
+    const ctx = await blockWebfonts(await browser.newContext({ viewport: { width: 420, height: 900 } }));
     await ctx.route('**/api/**', r => r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ authed: false, entitlement: { isPro: false, plan: 'free', status: 'none' }, limits: { freeRuns: 5, runsUsedToday: 0, runsLeft: 5 } }) }));
     const page = await ctx.newPage();
     await page.goto(srv.origin + '/?go=__proto__', { waitUntil: 'networkidle' });

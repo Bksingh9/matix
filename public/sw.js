@@ -11,7 +11,7 @@
  *     Entitlement is server-authoritative, and a cache is a second opinion.
  */
 
-const VERSION = 'v12';
+const VERSION = 'v13';
 const SHELL = `mindsharp-shell-${VERSION}`;
 const RUNTIME = `mindsharp-runtime-${VERSION}`;
 
@@ -23,6 +23,10 @@ const SHELL_URLS = [
   './css/themes.css',
   './favicon.svg',
   './manifest.webmanifest',
+  './manifest-clay.webmanifest',
+  './manifest-aurora.webmanifest',
+  './manifest-neon.webmanifest',
+  './manifest-bold.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './js/main.js',

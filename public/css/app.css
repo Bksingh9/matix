@@ -11,6 +11,13 @@
   /* Text that sits on top of the accent colour. A theme with a light accent
      needs dark text here and vice versa, so it cannot be hard-coded. */
   --on-accent:#241905;
+  /* Achievement metals and the streak-freeze blue. Tokens rather than literals
+     because the pastels that read as metal on a dark card are barely visible
+     on a white one — the light themes reassign them to darker equivalents. */
+  --tier-bronze:#d09a5a; --tier-silver:#c6cdd6; --tier-gold:#ffd76a; --tier-platinum:#c9e4ff; --tier-freeze:#9cc7ea;
+  /* The halo a lit memory tile throws. Follows the accent, so a blue theme
+     does not glow amber. */
+  --accent-glow:rgba(255,180,58,.7);
   --display:'Bricolage Grotesque', system-ui, -apple-system, sans-serif;
   --mono:'Space Mono', ui-monospace, Menlo, monospace;
   /* Larger, softer radii and a real spacing scale. Material-You-ish shapes
@@ -51,7 +58,7 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px;}
 .tb-right{display:flex;align-items:center;flex-wrap:wrap;justify-content:flex-end;gap:var(--s1);min-width:0;flex:1;}
 .runs-pill{font-family:var(--mono);font-size:10px;letter-spacing:.06em;color:var(--ink-dim);background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:5px 10px;white-space:nowrap;}
 .runs-pill b{color:var(--accent-ink);}
-.pro-btn{font-family:var(--mono);font-weight:700;font-size:11px;letter-spacing:.12em;text-transform:uppercase;background:linear-gradient(180deg,var(--amber),var(--amber-deep));color:var(--on-accent);border-radius:99px;padding:8px 14px;box-shadow:0 4px 14px -6px rgba(255,180,58,.6);}
+.pro-btn{font-family:var(--mono);font-weight:700;font-size:11px;letter-spacing:.12em;text-transform:uppercase;background:linear-gradient(180deg,var(--amber),var(--amber-deep));color:var(--on-accent);border-radius:99px;padding:8px 14px;box-shadow:0 4px 14px -6px var(--accent-glow);}
 .pro-badge{font-family:var(--mono);font-weight:700;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--accent-ink);border:1px solid var(--amber);border-radius:99px;padding:6px 11px;}
 
 /* ============ DAILY HERO ============ */
@@ -60,7 +67,7 @@ button:focus-visible{outline:2px solid var(--amber);outline-offset:2px;}
   border:none;border-radius:var(--r-xl);padding:var(--s4);margin-bottom:var(--s3);box-shadow:var(--lift);
   transition:transform .16s ease,border-color .16s ease;}
 .daily:hover{transform:translateY(-2px);box-shadow:var(--lift-lg);}
-.daily::before{content:"";position:absolute;right:-40px;top:-40px;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,rgba(255,180,58,.16),transparent 70%);}
+.daily::before{content:"";position:absolute;right:-40px;top:-40px;width:150px;height:150px;border-radius:50%;background:radial-gradient(circle,var(--amber-soft),transparent 70%);}
 .daily-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;position:relative;}
 .daily-tag{font-family:var(--mono);font-size:9.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--accent-ink);}
 .daily-date{font-family:var(--mono);font-size:10px;color:var(--ink-faint);}
@@ -214,7 +221,7 @@ details.settings[open] summary{color:var(--accent-ink);border-bottom:1px solid v
 .r-trend .empty{font-family:var(--mono);font-size:10.5px;color:var(--ink-dim);}
 .r-trend svg{width:100%;height:44px;display:block;}
 .r-actions{display:flex;flex-direction:column;gap:10px;width:100%;margin-top:auto;}
-.btn-primary{width:100%;min-height:56px;border-radius:15px;background:linear-gradient(180deg,var(--amber),var(--amber-deep));color:var(--on-accent);font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 8px 24px -10px rgba(255,180,58,.5);transition:transform .14s;}
+.btn-primary{width:100%;min-height:56px;border-radius:15px;background:linear-gradient(180deg,var(--amber),var(--amber-deep));color:var(--on-accent);font-weight:800;font-size:17px;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 8px 24px -10px var(--accent-glow);transition:transform .14s;}
 .btn-primary:hover{transform:translateY(-2px);}
 .btn-ghost{width:100%;min-height:48px;border-radius:14px;border:1px solid var(--line-strong);color:var(--ink-dim);font-weight:600;font-size:14.5px;transition:.14s;}
 .btn-ghost:hover{color:var(--ink);border-color:var(--accent-ink);}
@@ -321,7 +328,7 @@ details.settings[open] summary{color:var(--accent-ink);border-bottom:1px solid v
   color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:99px;padding:5px 9px;white-space:nowrap;transition:.14s;}
 .streak-chip.at_risk{border-color:var(--accent-ink);color:var(--accent-ink);}
 .streak-chip.urgent{border-color:var(--coral);color:var(--coral);animation:pulse 1.6s ease-in-out infinite;}
-.streak-chip.frozen{border-color:#6fa8dc;color:#9cc7ea;}
+.streak-chip.frozen{border-color:var(--tier-freeze);color:var(--tier-freeze);}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.55;}}
 
 /* ============ XP PANEL ============ */
@@ -352,10 +359,10 @@ details.settings[open] summary{color:var(--accent-ink);border-bottom:1px solid v
 .toast .t-xp{font-family:var(--mono);font-weight:700;font-size:12px;color:var(--mint-ink);flex:none;}
 .toast.level{border-color:var(--accent-ink);background:linear-gradient(180deg,var(--amber-soft),var(--surface-2) 70%);}
 .toast.streak .t-glyph{color:var(--coral);}
-.toast.freeze .t-glyph{color:#9cc7ea;}
-.toast.gold .t-glyph{color:#ffd76a;}
-.toast.platinum .t-glyph{color:#c9e4ff;}
-.toast.bronze .t-glyph{color:#d09a5a;}
+.toast.freeze .t-glyph{color:var(--tier-freeze);}
+.toast.gold .t-glyph{color:var(--tier-gold);}
+.toast.platinum .t-glyph{color:var(--tier-platinum);}
+.toast.bronze .t-glyph{color:var(--tier-bronze);}
 
 /* ============ PROFILE ============ */
 .prof-level{display:flex;align-items:center;gap:14px;margin-bottom:16px;}
@@ -380,10 +387,10 @@ details.settings[open] summary{color:var(--accent-ink);border-bottom:1px solid v
 .ach{display:flex;align-items:center;gap:11px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 12px;opacity:.55;}
 .ach.on{opacity:1;border-color:var(--line-strong);}
 .ach .a-glyph{font-size:15px;flex:none;color:var(--ink-faint);}
-.ach.on.bronze .a-glyph{color:#d09a5a;}
-.ach.on.silver .a-glyph{color:#c6cdd6;}
-.ach.on.gold .a-glyph{color:#ffd76a;}
-.ach.on.platinum .a-glyph{color:#c9e4ff;}
+.ach.on.bronze .a-glyph{color:var(--tier-bronze);}
+.ach.on.silver .a-glyph{color:var(--tier-silver);}
+.ach.on.gold .a-glyph{color:var(--tier-gold);}
+.ach.on.platinum .a-glyph{color:var(--tier-platinum);}
 .ach .a-text{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1;}
 .ach .a-text b{font-size:13px;font-weight:700;}
 .ach .a-text>span{font-family:var(--mono);font-size:9px;line-height:1.4;color:var(--ink-dim);}
@@ -487,7 +494,7 @@ body{
 }
 #panel-grid .tile:active{transform:scale(.94);}
 /* Lit during the reveal window. */
-#panel-grid .tile.lit{background:var(--amber);box-shadow:0 0 0 2px var(--amber), 0 8px 24px -8px rgba(255,180,58,.7);}
+#panel-grid .tile.lit{background:var(--amber);box-shadow:0 0 0 2px var(--amber), 0 8px 24px -8px var(--accent-glow);}
 /* Correctly recalled. */
 #panel-grid .tile.hit{background:var(--amber);box-shadow:0 0 0 2px var(--amber);}
 /* The tile that ended the round. */

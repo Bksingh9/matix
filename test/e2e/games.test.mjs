@@ -1,6 +1,6 @@
 import { test, before, after, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { serve, launch, openApp, playCorrectly, snapshotState, openSettings } from './helpers.mjs';
+import { serve, launch, openApp, playCorrectly, snapshotState, openSettings, blockWebfonts } from './helpers.mjs';
 
 /* Phase 0 acceptance: the modular build must behave like the single file.
    Every game mode is actually played, not just rendered. */
@@ -204,7 +204,7 @@ describe('settings', () => {
 
 describe('persistence', () => {
   test('stats survive a reload', async () => {
-    const ctx = await browser.newContext({ viewport: { width: 420, height: 900 } });
+    const ctx = await blockWebfonts(await browser.newContext({ viewport: { width: 420, height: 900 } }));
     const page = await ctx.newPage();
     await page.goto(srv.origin + '/', { waitUntil: 'networkidle' });
     await page.waitForFunction(() => !!window.__mindsharp);

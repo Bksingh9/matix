@@ -57,7 +57,7 @@ function genMatrix() {
      dropped there for the same reason: it is per-player by definition. */
   const level = S.isDaily ? Math.floor(S.solved / 3) + 2 : S.correct + 1;
   const p = makePattern(level, rnd, {
-    consecutiveFails: S.isDaily ? 0 : (S.matrixFails || 0)
+    consecutiveFails: S.isDaily ? 0 : S.matrixFails
   });
   return {
     kind: 'grid',

@@ -1,6 +1,6 @@
 import { test, before, after, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { serve, launch, openApp, playCorrectly } from './helpers.mjs';
+import { serve, launch, openApp, playCorrectly, blockWebfonts } from './helpers.mjs';
 
 /* Phase 11. The failure mode here is not "it doesn't work" — it is "the player
    mutes the app forever", which is unrecoverable. So what is tested is the
@@ -13,7 +13,7 @@ after(async () => { await browser?.close(); srv?.server.close(); });
 /* A fake Capacitor, installed before any app script runs. Records every plugin
    call so the scheduling policy can be asserted. */
 const withCapacitor = async (browser, srv, { permission = 'granted', platform = 'android' } = {}) => {
-  const ctx = await browser.newContext({ viewport: { width: 420, height: 900 } });
+  const ctx = await blockWebfonts(await browser.newContext({ viewport: { width: 420, height: 900 } }));
   await ctx.addInitScript(([perm, plat]) => {
     window.__cap = { calls: [], scheduled: [], cancelled: [], channels: [] };
     const rec = (name, args) => { window.__cap.calls.push({ name, args }); };

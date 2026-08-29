@@ -48,7 +48,7 @@ export function startRun(id, isDaily) {
   S.score = 0; S.streak = 0; S.bestStreak = 0; S.mult = 1;
   S.solved = 0; S.correct = 0; S.wrong = 0; S.times = []; S.marks = []; S.attempts = [];
   S.lives = g.lives || 3; S.level = 1; S.locked = false; S.input = ''; S.picked = [];
-  S.problem = null; S.memorizing = false;
+  S.problem = null; S.memorizing = false; S.matrixFails = 0;
   S.timeLeft = g.duration || 60; S.runStart = now(); lastTs = null;
   if (id !== 'drill') S.drill = null;
   syncSound();
@@ -137,7 +137,7 @@ export function gridTap(i) {
   if (r.status === 'wrong') {
     S.locked = true; S.solved++;
     // Feeds the next deal's reveal window: two in a row hands time back.
-    S.matrixFails = (S.matrixFails || 0) + 1;
+    S.matrixFails += 1;
     revealGrid(p.pattern);
     bad('Missed', (now() - S.pStart) / 1000, null);
   } else if (r.status === 'complete') {
@@ -250,7 +250,7 @@ function timeoutProblem() {
     // There is no "answer" to show — the pattern is the answer, so show it,
     // the same way a wrong tap does. Without this the answer line reads
     // "= null", which is the message a timed-out player sees most often.
-    S.matrixFails = (S.matrixFails || 0) + 1;
+    S.matrixFails += 1;
     revealGrid(S.problem.pattern);
     flashBad('Too slow', 'Time');
   } else {

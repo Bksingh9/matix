@@ -66,6 +66,19 @@ export async function launch() {
   return chromium.launch({ executablePath, args: ['--no-sandbox', '--disable-dev-shm-usage'] });
 }
 
+/* index.html links Google Fonts. Nothing in this suite asserts on type — no
+   test measures a box or reads a font — but on a network that reaches the
+   internet through a proxy the request stalls for about twelve seconds, on
+   every page load, in every test. Fulfilled empty rather than aborted: an
+   aborted stylesheet is a console error, and openApp treats those as failures.
+
+   The wider point is that a test suite should not depend on a CDN being up. */
+export async function blockWebfonts(ctx) {
+  await ctx.route('**://fonts.googleapis.com/**', r => r.fulfill({ status: 200, contentType: 'text/css', body: '' }));
+  await ctx.route('**://fonts.gstatic.com/**', r => r.fulfill({ status: 200, contentType: 'font/woff2', body: '' }));
+  return ctx;
+}
+
 export const FREE_ME = {
   authed: false, user: null,
   entitlement: { isPro: false, plan: 'free', status: 'none', currentPeriodEnd: null, cancelAtPeriodEnd: false },
@@ -93,6 +106,7 @@ export const proMe = (over = {}) => ({
    opts.apiDown  every /api/* call fails at the network level */
 export async function openApp(browser, origin, opts = {}) {
   const ctx = await browser.newContext({ viewport: { width: 420, height: 900 } });
+  await blockWebfonts(ctx);
 
   const routes = {
     '/api/config': { status: 200, body: { supabaseUrl: null, supabaseAnonKey: null, authEnabled: false, checkoutEnabled: false, appUrl: null } },

@@ -125,15 +125,21 @@ function bind() {
   $('#toggle-auto').addEventListener('click', () => { S.autoSubmit = !S.autoSubmit; $('#toggle-auto').classList.toggle('on', S.autoSubmit); savePrefs(); });
   $('#toggle-sound').addEventListener('click', () => { S.sound = !S.sound; $('#toggle-sound').classList.toggle('on', S.sound); if (S.sound) audio(); syncSound(); savePrefs(); });
 
-  // Theme picker. Re-rendered on change so the pressed state follows, and
-  // delegated because of it.
-  const paintThemes = () => { $('#theme-picker').innerHTML = themePickerHtml(loadTheme()); };
-  paintThemes();
+  // Theme picker. Built once and then updated in place: replacing the innerHTML
+  // on every change would destroy the button the keyboard user just activated,
+  // dumping focus back to <body> mid-interaction.
+  $('#theme-picker').innerHTML = themePickerHtml(loadTheme());
+  const markTheme = id => {
+    for (const b of $('#theme-picker').querySelectorAll('[data-theme-id]')) {
+      const on = b.dataset.themeId === id;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+    }
+  };
   $('#theme-picker').addEventListener('click', e => {
     const card = e.target.closest('[data-theme-id]');
     if (!card) return;
-    setTheme(card.dataset.themeId);
-    paintThemes();
+    markTheme(setTheme(card.dataset.themeId));
     track('theme_changed', { theme: card.dataset.themeId });
   });
 

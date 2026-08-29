@@ -1,6 +1,6 @@
 import { test, before, after, describe } from 'node:test';
 import assert from 'node:assert/strict';
-import { serve, launch, openApp } from './helpers.mjs';
+import { serve, launch, blockWebfonts } from './helpers.mjs';
 
 /* Five looks over one app.
  *
@@ -17,7 +17,7 @@ before(async () => { srv = await serve(); browser = await launch(); });
 after(async () => { await browser?.close(); srv?.server.close(); });
 
 const openWith = async theme => {
-  const ctx = await browser.newContext({ viewport: { width: 420, height: 900 } });
+  const ctx = await blockWebfonts(await browser.newContext({ viewport: { width: 420, height: 900 } }));
   const page = await ctx.newPage();
   const errors = [];
   page.on('pageerror', e => errors.push(String(e)));
@@ -34,8 +34,13 @@ const tokens = page => page.evaluate(() => {
     theme: document.documentElement.dataset.theme,
     meta: document.querySelector('meta[name="theme-color"]')?.getAttribute('content'),
     ink: get('--ink'), bg: get('--bg'), accent: get('--amber'), onAccent: get('--on-accent'),
-    surface: get('--surface'), accentInk: get('--accent-ink'),
-    mintInk: get('--mint-ink'), inkFaint: get('--ink-faint')
+    surface: get('--surface'), surface2: get('--surface-2'), surface3: get('--surface-3'),
+    accentInk: get('--accent-ink'), mintInk: get('--mint-ink'), inkFaint: get('--ink-faint'),
+    manifest: document.querySelector('link[rel="manifest"]')?.getAttribute('href'),
+    tiers: {
+      bronze: get('--tier-bronze'), silver: get('--tier-silver'),
+      gold: get('--tier-gold'), platinum: get('--tier-platinum'), freeze: get('--tier-freeze')
+    }
   };
 });
 
@@ -99,6 +104,52 @@ describe('themes', () => {
       }
       await ctx.close();
     });
+
+    test(`${theme} keeps the achievement metals visible`, async () => {
+      /* These were literals — pastel bronze, silver, gold, platinum — chosen
+         against a near-black card. On Clay and Bold they landed at about
+         1.3:1 and the glyph a player had just earned was invisible. */
+      const { page, ctx } = await openWith(theme);
+      const t = await tokens(page);
+      for (const [name, hex] of Object.entries(t.tiers)) {
+        assert.ok(/^#[0-9a-fA-F]{6}$/.test(hex), `${theme}: --tier-${name} is "${hex}"`);
+        const r = contrast(hex, t.surface);
+        assert.ok(r >= 4.5, `${theme}: the ${name} glyph on a card is only ${r.toFixed(2)}:1`);
+      }
+      await ctx.close();
+    });
+
+    test(`${theme} raises its surfaces in the right order`, async () => {
+      /* --surface-2 and -3 are used for things that sit ON a card: tab strips,
+         progress tracks, sheets. Neon had -2 darker than -1, so every raised
+         element read as a hole. */
+      const { page, ctx } = await openWith(theme);
+      const t = await tokens(page);
+      const [l1, l2, l3] = [t.surface, t.surface2, t.surface3].map(lum);
+      const dir = LIGHT.includes(theme) ? -1 : 1;
+      assert.ok(dir * (l2 - l1) >= 0, `${theme}: --surface-2 goes the wrong way (${l1.toFixed(3)} -> ${l2.toFixed(3)})`);
+      assert.ok(dir * (l3 - l2) >= 0, `${theme}: --surface-3 goes the wrong way (${l2.toFixed(3)} -> ${l3.toFixed(3)})`);
+      await ctx.close();
+    });
+
+    test(`${theme} points at a manifest that matches it`, async () => {
+      /* An installed app splashes on the manifest's background_color, not on
+         the meta tag — so a Clay user's app used to flash Ember black on every
+         cold start. */
+      const { page, ctx } = await openWith(theme);
+      const t = await tokens(page);
+      const expected = theme === 'ember' ? 'manifest.webmanifest' : `manifest-${theme}.webmanifest`;
+      assert.equal(t.manifest, expected);
+
+      const res = await page.request.get(new URL(expected, srv.origin + '/').href);
+      assert.equal(res.status(), 200, `${expected} is not served`);
+      const man = await res.json();
+      assert.equal(man.theme_color.toLowerCase(), t.meta.toLowerCase(),
+        `${theme}: the manifest and the meta tag disagree`);
+      assert.equal(man.background_color.toLowerCase(), t.meta.toLowerCase());
+      assert.equal(man.id, './', 'every variant must keep the same app identity');
+      await ctx.close();
+    });
   }
 
   test('the picker switches the whole app and the choice sticks', async () => {
@@ -106,8 +157,19 @@ describe('themes', () => {
     assert.equal((await tokens(page)).theme, 'ember', 'ember is the default');
 
     await page.evaluate(() => document.querySelector('details.settings').open = true);
+    await page.focus('#theme-picker [data-theme-id="neon"]');
     await page.click('#theme-picker [data-theme-id="neon"]');
     assert.equal((await tokens(page)).theme, 'neon');
+
+    /* The picker used to be re-rendered wholesale on every change, which
+       destroyed the very button the keyboard user had just activated and
+       dropped focus to <body> mid-interaction. */
+    const focused = await page.evaluate(() => document.activeElement?.dataset?.themeId || null);
+    assert.equal(focused, 'neon', 'activating a theme threw focus away');
+    const pressed = await page.evaluate(() =>
+      [...document.querySelectorAll('#theme-picker [data-theme-id]')]
+        .filter(b => b.getAttribute('aria-pressed') === 'true').map(b => b.dataset.themeId));
+    assert.deepEqual(pressed, ['neon'], 'exactly one card reads as pressed');
 
     await page.reload({ waitUntil: 'domcontentloaded' });
     await page.waitForFunction(() => window.__mindsharp?.booted === true, null, { timeout: 15000 });
