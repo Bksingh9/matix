@@ -122,6 +122,15 @@ Any row here is someone who paid and got nothing. It should be empty.
 
 ## 6. Final pre-launch pass
 
+**Run `npm run preflight` first.** It asks Supabase and Lemon Squeezy directly
+rather than reading your variables back to you, and it catches the four
+mistakes that only surface once a card has been charged: a variant id wired to
+the wrong billing interval, an anon key and a service key from two different
+projects, RLS not actually on, and a webhook secret that was never set. It
+prints no secret values, so its output is safe to paste into a bug report.
+
+Everything below is what it cannot check for you.
+
 - [ ] `npm run verify` — everything green.
 - [ ] `FORCE_PROD_CHECK=1 npm run check:prod` — green.
 - [ ] Open the production paywall and confirm the "Preview Pro" button is

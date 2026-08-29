@@ -243,6 +243,7 @@ work; clicking the setting once is simpler.
 | `npm run verify:android` | Builds the Android app and checks the APK exists |
 | `npm run smoke -- <url>` | Plays a **deployed** site in a real browser. Run automatically after every Pages deploy. |
 | `npm run verify:deploy -- <url>` | Proves a deployed url is serving *this* commit — every file byte-for-byte, and a Content-Type each module can load under. Defaults to the pinned githack url. |
+| `npm run preflight` | Asks the **live** Supabase and Lemon Squeezy whether this configuration will actually take money. Never prints a secret. |
 
 ## Retention, and why it is built this way
 
