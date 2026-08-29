@@ -276,8 +276,26 @@ describe('test mode', () => {
   });
 
   test('a test-mode purchase works on a preview deployment', async () => {
+    // Set explicitly. This test used to pass with VERCEL_ENV unset, relying on
+    // "not production unless it says so" — which meant a self-hosted or
+    // misconfigured deploy granted real Pro for a test purchase on a fake card.
+    process.env.VERCEL_ENV = 'preview';
+    try {
+      const res = await deliver(sub('subscription_created', { test_mode: true }, { test_mode: true }));
+      assert.equal(res.json.applied, true);
+    } finally {
+      delete process.env.VERCEL_ENV;
+    }
+  });
+
+  test('an unknown environment is treated as production, not as a test box', async () => {
+    // Test and live events are signed with the SAME secret, so this flag is
+    // the only thing between a real sale and a free one. It has to fail closed.
+    delete process.env.VERCEL_ENV;
+    delete process.env.NODE_ENV;
     const res = await deliver(sub('subscription_created', { test_mode: true }, { test_mode: true }));
-    assert.equal(res.json.applied, true);
+    assert.notEqual(res.json.applied, true, 'a test purchase must not grant Pro here');
+    assert.equal(sb.tables.entitlements.length, 0);
   });
 });
 

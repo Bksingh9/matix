@@ -94,9 +94,16 @@ async function processEvent(db, eventName, payload, id) {
 
   const hints = identityHints(payload);
 
-  // A test-mode purchase must never grant production Pro. In a test
-  // deployment the reverse also holds.
-  const prodDeploy = process.env.VERCEL_ENV === 'production';
+  /* A test-mode purchase must never grant production Pro — test and live
+     events are signed with the same secret, so the flag is the only thing
+     separating a real sale from a free one on a fake card.
+
+     Fails CLOSED: anything that is not explicitly a preview or development
+     deploy counts as production. Reading it the other way round meant a
+     self-hosted or misconfigured environment — where VERCEL_ENV is simply
+     unset — treated every test purchase as real. */
+  const env = process.env.VERCEL_ENV || process.env.NODE_ENV || '';
+  const prodDeploy = !['preview', 'development', 'test'].includes(env);
   if (hints.testMode && prodDeploy) {
     return { ignored: 'test_mode_event_on_production' };
   }

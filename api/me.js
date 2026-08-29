@@ -33,7 +33,15 @@ export default async function handler(req, res) {
   if (!isConfigured()) { ok(res, anon); return; }
 
   try {
-    if (!(await guard(res, 'read', clientIp(req)))) { ok(res, anon); return; }
+    /* Keyed on IP alone, because this runs before auth — every other route
+       also keys on user id. Behind carrier-grade NAT or an office egress that
+       is one shared bucket, so a noisy client would burn it for everyone on
+       that IP and each of them would get the anonymous shape back. setPro()
+       would then strip Pro from paying users who did nothing wrong.
+
+       So it answers 429 rather than `anon`: the client keeps whatever
+       entitlement it had cached instead of overwriting it with FREE. */
+    if (!(await guard(res, 'read', clientIp(req)))) return tooMany(res, 60);
 
     const user = await userFromRequest(req);
     if (!user) { ok(res, anon); return; }
