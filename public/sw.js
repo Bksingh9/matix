@@ -17,37 +17,37 @@ const RUNTIME = `mindsharp-runtime-${VERSION}`;
 
 /* Everything needed to boot and play a round with no network at all. */
 const SHELL_URLS = [
-  '/',
-  '/index.html',
-  '/css/app.css',
-  '/favicon.svg',
-  '/manifest.webmanifest',
-  '/icons/icon-192.png',
-  '/icons/icon-512.png',
-  '/js/main.js',
-  '/js/config.js',
-  '/js/util.js',
-  '/js/store.js',
-  '/js/state.js',
-  '/js/audio.js',
-  '/js/games.js',
-  '/js/ui.js',
-  '/js/engine.js',
-  '/js/paywall.js',
-  '/js/analytics.js',
-  '/js/api.js',
-  '/js/auth.js',
-  '/js/entitlement.js',
-  '/js/account.js',
-  '/js/drills.js',
-  '/js/runlog.js',
-  '/js/progress.js',
-  '/js/progression.js',
-  '/js/social.js',
-  '/js/install.js',
-  '/js/native.js',
-  '/js/notify.js',
-  '/js/billing.js'
+  './',
+  './index.html',
+  './css/app.css',
+  './favicon.svg',
+  './manifest.webmanifest',
+  './icons/icon-192.png',
+  './icons/icon-512.png',
+  './js/main.js',
+  './js/config.js',
+  './js/util.js',
+  './js/store.js',
+  './js/state.js',
+  './js/audio.js',
+  './js/games.js',
+  './js/ui.js',
+  './js/engine.js',
+  './js/paywall.js',
+  './js/analytics.js',
+  './js/api.js',
+  './js/auth.js',
+  './js/entitlement.js',
+  './js/account.js',
+  './js/drills.js',
+  './js/runlog.js',
+  './js/progress.js',
+  './js/progression.js',
+  './js/social.js',
+  './js/install.js',
+  './js/native.js',
+  './js/notify.js',
+  './js/billing.js'
 ];
 
 self.addEventListener('install', event => {
@@ -95,10 +95,10 @@ self.addEventListener('fetch', event => {
       try {
         const fresh = await fetch(req);
         const cache = await caches.open(SHELL);
-        cache.put('/index.html', fresh.clone());
+        cache.put('./index.html', fresh.clone());
         return fresh;
       } catch {
-        return (await caches.match('/index.html')) || (await caches.match('/')) || Response.error();
+        return (await caches.match('./index.html')) || (await caches.match('./')) || Response.error();
       }
     })());
     return;

@@ -41,12 +41,10 @@ jobs:
       - id: pages
         uses: actions/configure-pages@v5
 
-      # base_path is "" for a user/org site and "/<repo>" for a project site;
-      # configure-pages works it out from the Pages settings.
+      # No base path needed: every asset path in public/ is relative, so the
+      # same build runs at a domain root or under /<repo>/ unchanged.
       - name: Build static site
-        run: |
-          BASE="${{ steps.pages.outputs.base_path }}"
-          node scripts/build-static.mjs --base="$BASE" --api="${{ vars.API_ORIGIN }}"
+        run: node scripts/build-static.mjs --api="${{ vars.API_ORIGIN }}"
 
       - uses: actions/upload-pages-artifact@v3
         with:

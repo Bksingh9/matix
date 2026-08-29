@@ -137,23 +137,33 @@ still fired; `test/e2e/funnel.test.mjs` verifies they land at runtime.
 
 ## Putting it somewhere
 
-The frontend is a static site. `scripts/build-static.mjs` turns `public/` into
-a `dist/` any host will serve:
+Every asset path under `public/` is **relative**, so the app runs from any
+directory on any host with no rebuild — a domain root, `/matix/`, or a CDN
+path forty characters deep. `scripts/build-static.mjs` adds only what a
+particular host needs:
 
 ```bash
-node scripts/build-static.mjs --base=          # served at a domain root
-node scripts/build-static.mjs --base=/matix    # a GitHub Pages project site
-node scripts/build-static.mjs --base= --api=https://your-app.vercel.app
+node scripts/build-static.mjs
+node scripts/build-static.mjs --api=https://your-app.vercel.app
 ```
 
-The rewrite exists because the app uses absolute paths (`/js/main.js`), which
-is what Vercel serves it as and what breaks under a subpath. It also restores
-the file extensions Vercel's `cleanUrls` hides, and repoints the service
-worker's shell and scope.
+It writes `404.html` (a static host has no rewrite rule, so a deep link would
+otherwise 404 instead of opening the game) and `.nojekyll`, and **fails the
+build if a root-absolute path reappears** — that is the one mistake that works
+on Vercel and silently breaks everywhere else.
 
-Without `--api`, `/api/*` 404s and the client runs anonymous and local-only —
-which it already knows how to do, and which never grants Pro. That is the
-correct shape for a demo.
+`/api/*` is the deliberate exception: left absolute, it 404s on a static host,
+and the client already treats an unreachable API as anonymous and free. It
+never falls back to Pro. `--api` points a static build at a real backend.
+
+Because the paths are relative, `public/` can also be served straight off a
+CDN that mirrors GitHub — no build, no account:
+
+```
+https://raw.githack.com/<owner>/<repo>/<branch>/public/index.html
+```
+
+Good enough to share a link; not a host to build a business on.
 
 **GitHub Pages** is wired in `.github/workflows/pages.yml` but needs the
 repository setting turned on once: *Settings → Pages → Source: GitHub

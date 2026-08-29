@@ -139,7 +139,7 @@ function registerServiceWorker() {
 
   window.addEventListener('load', async () => {
     try {
-      const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+      const reg = await navigator.serviceWorker.register('sw.js', { scope: './' });
 
       // A waiting worker means a new version is ready. Tell the player rather
       // than swapping the app out from under a run in progress.
