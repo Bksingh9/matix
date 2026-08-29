@@ -1,0 +1,29 @@
+name: Bug report
+description: Something behaves differently from how it should
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, what you got instead.
+    validations: { required: true }
+  - type: input
+    id: where
+    attributes:
+      label: Where
+      placeholder: e.g. Chrome 141 on Android 15, or the installed PWA
+    validations: { required: true }
+  - type: dropdown
+    id: signed_in
+    attributes:
+      label: Were you signed in?
+      description: Entitlement and progression behave differently for anonymous players.
+      options: ['Signed out', 'Signed in — free', 'Signed in — Pro']
+    validations: { required: true }
+  - type: textarea
+    id: console
+    attributes:
+      label: Console errors
+      description: Anything red in the browser console. Optional, but it usually names the bug.
+      render: text

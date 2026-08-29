@@ -213,8 +213,12 @@ describe('production hygiene', () => {
     const { page, ctx } = await openApp(browser, srv.origin);
     await page.click('#pro-cta');
     await page.waitForSelector('#paywall.show');
-    for (const href of ['/legal/refunds', '/legal/terms', '/legal/privacy']) {
-      assert.equal(await page.locator(`#paywall a[href="${href}"]`).count(), 1, `missing ${href}`);
+    // Relative, and carrying the .html that a static host needs; Vercel's
+    // cleanUrls redirects that form to the extensionless one.
+    for (const page_ of ['refunds', 'terms', 'privacy']) {
+      assert.equal(
+        await page.locator(`#paywall a[href$="legal/${page_}.html"]`).count(), 1,
+        `missing the ${page_} link`);
     }
     assert.match(await page.locator('#paywall .plan-note').innerText(), /merchant of record/i);
     await ctx.close();

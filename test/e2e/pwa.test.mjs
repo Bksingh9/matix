@@ -35,7 +35,10 @@ describe('the manifest', () => {
     const m = JSON.parse(await r.text());
     assert.equal(m.name.startsWith('MindSharp'), true);
     assert.equal(m.display, 'standalone');
-    assert.equal(m.start_url.startsWith('/'), true);
+    // Relative, so the app can be hosted in a subdirectory. What matters is
+    // that it stays same-origin and still marks PWA launches.
+    assert.equal(/^https?:/.test(m.start_url), false, 'start_url must stay same-origin');
+    assert.match(m.start_url, /source=pwa/);
     await ctx.close();
   });
 
@@ -54,7 +57,7 @@ describe('the manifest', () => {
     const { page, ctx } = await openApp(browser, srv.origin);
     const m = JSON.parse(read('public/manifest.webmanifest'));
     for (const icon of m.icons) {
-      const r = await page.request.get(srv.origin + icon.src);
+      const r = await page.request.get(new URL(icon.src, srv.origin + '/manifest.webmanifest').href);
       assert.equal(r.status(), 200, `${icon.src} is 404`);
       const buf = await r.body();
       assert.equal(buf.subarray(1, 4).toString(), 'PNG', `${icon.src} is not a PNG`);
@@ -66,7 +69,9 @@ describe('the manifest', () => {
   test('shortcuts point at real launch intents', async () => {
     const m = JSON.parse(read('public/manifest.webmanifest'));
     assert.ok(m.shortcuts?.length >= 1);
-    for (const s of m.shortcuts) assert.match(s.url, /^\/\?go=\w+$/);
+    // './?go=blitz' or '/?go=blitz' — both launch correctly; the point is that
+    // each one names a mode the app actually has.
+    for (const s of m.shortcuts) assert.match(s.url, /^\.?\/\?go=\w+$/);
   });
 
   test('the page links the manifest and the iOS icon', async () => {
@@ -100,7 +105,7 @@ describe('the service worker', () => {
 
   test('precaches every client module, so nothing 404s offline', () => {
     const sw = read('public/sw.js');
-    const listed = new Set([...sw.matchAll(/'\/js\/([\w.-]+\.js)'/g)].map(m => m[1]));
+    const listed = new Set([...sw.matchAll(/'\.?\/js\/([\w.-]+\.js)'/g)].map(m => m[1]));
     const actual = readdirSync(resolve(ROOT, 'public/js')).filter(f => f.endsWith('.js'));
     const missing = actual.filter(f => !listed.has(f));
     assert.deepEqual(missing, [], `service worker shell is missing: ${missing.join(', ')}`);
@@ -109,9 +114,10 @@ describe('the service worker', () => {
   test('only precaches files that exist', async () => {
     const { page, ctx } = await openApp(browser, srv.origin);
     const sw = read('public/sw.js');
-    const urls = [...sw.matchAll(/^\s*'(\/[^']*)',?$/gm)].map(m => m[1]);
+    const urls = [...sw.matchAll(/^\s*'(\.?\/[^']*)',?$/gm)].map(m => m[1]);
     for (const u of urls) {
-      const r = await page.request.get(srv.origin + u);
+      // Shell entries resolve against the worker's scope, which is the root here.
+      const r = await page.request.get(new URL(u, srv.origin + '/').href);
       assert.equal(r.status(), 200, `precache entry ${u} does not exist`);
     }
     await ctx.close();

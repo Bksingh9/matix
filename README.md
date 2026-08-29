@@ -11,6 +11,7 @@ Lemon Squeezy as merchant of record.
 It also ships as an installable PWA and as native Android and iOS apps —
 Capacitor shells around the same `public/` build, with no second codebase.
 
+- `NOTICE.md` — copyright: public to read, not licensed for reuse
 - `MINDSHARP_BUILD_SPEC.md` — the build brief this was implemented against
 - `MONETISATION_PLAN.md` — the commercial reasoning behind it
 - `LAUNCH.md` — where to distribute it, and how the money arrives
