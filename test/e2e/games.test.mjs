@@ -14,7 +14,16 @@ describe('app boot', () => {
   test('loads with no console errors and renders the menu', async () => {
     const { page, ctx, errors } = await openApp(browser, srv.origin);
     assert.equal(await page.locator('#screen-menu.active').count(), 1);
-    assert.equal(await page.locator('.gcard').count(), 8, 'seven training games plus Drill');
+    // Derived from the catalogue rather than hard-coded: the point of this
+    // assertion is that every non-hidden mode gets a card, not that there are
+    // exactly N of them. A literal here fails every time a mode is added,
+    // which teaches people to bump the number rather than read the failure.
+    const expected = await page.evaluate(async () => {
+      const { GAMES } = await import('/js/games.js');
+      return Object.values(GAMES).filter(g => !g.hidden).length;
+    });
+    assert.ok(expected >= 8, 'the catalogue itself looks wrong');
+    assert.equal(await page.locator('.gcard').count(), expected, 'every visible mode gets a card');
     assert.match(await page.locator('#runs-pill').innerText(), /5 runs left/);
     assert.deepEqual(errors, []);
     await ctx.close();
