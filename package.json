@@ -21,6 +21,8 @@
     "verify:sql": "node scripts/verify-sql.mjs",
     "verify:android": "node scripts/verify-android.mjs",
     "smoke": "node scripts/smoke-live.mjs",
+    "store:shots": "node scripts/store-shots.mjs",
+    "store:feature": "node scripts/store-feature.mjs",
     "check:events": "node scripts/check-events.mjs",
     "assets:native": "npx capacitor-assets generate --iconBackgroundColor '#16120c' --iconBackgroundColorDark '#16120c' --splashBackgroundColor '#16120c' --splashBackgroundColorDark '#16120c' && node scripts/make-icons.mjs && node scripts/fix-manifest.mjs",
     "icons": "node scripts/make-icons.mjs",
