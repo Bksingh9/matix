@@ -11,6 +11,7 @@ Lemon Squeezy as merchant of record.
 It also ships as an installable PWA and as native Android and iOS apps —
 Capacitor shells around the same `public/` build, with no second codebase.
 
+- `FREE-STACK.md` — running the whole thing on free tiers, and where "free" has a catch
 - `NOTICE.md` — copyright: public to read, not licensed for reuse
 - `MINDSHARP_BUILD_SPEC.md` — the build brief this was implemented against
 - `MONETISATION_PLAN.md` — the commercial reasoning behind it
@@ -131,9 +132,11 @@ and `npm run build` runs the secret scan plus the production guards first.
 
 ### 4. Analytics
 
-Set `CONFIG.analytics.plausible.domain` in `public/js/config.js` to the site
-registered in your Plausible account. Leave it empty and no third-party script
-loads at all. `npm run check:events` verifies all fourteen funnel events are
+Set `CONFIG.analytics.provider` in `public/js/config.js` to `posthog`, `umami`
+or `plausible`, and fill in that provider's block. PostHog's free tier covers
+1M events a month and does the funnel and retention analysis the monetisation
+plan asks for; Plausible is the nicest and the only paid one. The default is
+`none`, which loads no third-party script at all. `npm run check:events` verifies all fourteen funnel events are
 still fired; `test/e2e/funnel.test.mjs` verifies they land at runtime.
 
 ## Putting it somewhere

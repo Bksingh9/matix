@@ -1,0 +1,13 @@
+# Cloudflare Pages, the free host that also permits commercial use.
+#
+# Connect the repo in the Cloudflare dashboard and it reads this. Nothing here
+# needs a paid plan, and unlike Vercel's Hobby tier there is no non-commercial
+# restriction to trip over once you start charging — see FREE-STACK.md.
+name = "mindsharp"
+pages_build_output_dir = "dist"
+
+# Set API_ORIGIN in the dashboard to point the static build at a deployed
+# backend. Left unset, /api/* 404s and the client runs anonymous and free,
+# which is the correct shape for a demo and never grants Pro.
+[vars]
+NODE_VERSION = "22"

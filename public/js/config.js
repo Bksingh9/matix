@@ -24,10 +24,26 @@ export const CONFIG = {
   freeRuns: 5,
   analytics: {
     enabled: true,
-    // Plausible: cookieless and aggregate, so there is nothing to consent to
-    // and no banner to show. Set `domain` to the site registered in your
-    // Plausible account; leaving it empty disables the script and track()
-    // falls back to whatever else is on the page (gtag, dataLayer).
+    /* Which analytics to load, or 'none' to load nothing at all.
+       Every option here is cookieless and aggregate, which is why this app
+       has no consent banner: there is nothing to consent to.
+
+       'posthog'  — free tier covers 1M events/month and does funnels and
+                    retention, which is what MONETISATION_PLAN.md §8 actually
+                    needs. The default recommendation.
+       'umami'    — free cloud tier or self-hosted. Lighter, simpler.
+       'plausible'— the nicest of the three and the only paid one (~$9/mo).
+       'none'     — ships no third-party script whatsoever. */
+    provider: 'none',
+
+    // PostHog: `key` is the project API key (safe in client code — it is
+    // write-only by design). Use the EU host if your users are in the EU.
+    posthog: { key: '', host: 'https://eu.i.posthog.com' },
+
+    // Umami: `website` is the site id from your dashboard.
+    umami: { website: '', src: 'https://cloud.umami.is/script.js' },
+
+    // Plausible: `domain` is the site registered in your account.
     plausible: { domain: '', src: 'https://plausible.io/js/script.js' }
   },
   // The dev Pro preview is a free Pro button. `npm run check:prod` fails a
