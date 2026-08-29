@@ -33,7 +33,9 @@ const tokens = page => page.evaluate(() => {
   return {
     theme: document.documentElement.dataset.theme,
     meta: document.querySelector('meta[name="theme-color"]')?.getAttribute('content'),
-    ink: get('--ink'), bg: get('--bg'), accent: get('--amber'), onAccent: get('--on-accent')
+    ink: get('--ink'), bg: get('--bg'), accent: get('--amber'), onAccent: get('--on-accent'),
+    surface: get('--surface'), accentInk: get('--accent-ink'),
+    mintInk: get('--mint-ink'), inkFaint: get('--ink-faint')
   };
 });
 
@@ -71,6 +73,19 @@ describe('themes', () => {
       assert.ok(ratio >= 4.5, `${theme}: ink on bg is only ${ratio.toFixed(2)}:1`);
       const onAccent = contrast(t.onAccent, t.accent);
       assert.ok(onAccent >= 4.5, `${theme}: text on the accent is only ${onAccent.toFixed(2)}:1`);
+
+      /* The axis that actually failed. The first version of this test checked
+         only ink-on-bg and text-on-accent — both of which passed everywhere —
+         while the accent used AS TEXT on a card sat at 2.11:1 in clay. Every
+         eyebrow, score and glyph in the app is one of these three. */
+      for (const [label, fg] of [
+        ['the accent as text', t.accentInk],
+        ['the success colour as text', t.mintInk],
+        ['faint label text', t.inkFaint]
+      ]) {
+        const r = contrast(fg, t.surface);
+        assert.ok(r >= 4.5, `${theme}: ${label} on a card is only ${r.toFixed(2)}:1`);
+      }
       await ctx.close();
     });
 

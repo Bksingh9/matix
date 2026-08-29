@@ -64,6 +64,11 @@ export function bands(d) {
 }
 
 export function diff() {
+  /* Matrix has no arithmetic, so the difficulty selector is meaningless to it
+     — but points() keys off diff(), which made Expert worth ~3.8x Easy on a
+     free mode whose scores go to a public leaderboard. Pinned, so the board
+     ranks recall rather than which setting someone picked. */
+  if (S.game === 'matrix') return 'medium';
   if (S.isDaily) return 'medium';
   if (S.game === 'survival' || S.game === 'recall') {
     const l = Math.floor(S.correct / 3) + 1;

@@ -16,10 +16,11 @@
 
 /* ---------- EMBER — the original, and still the default ---------- */
 html[data-theme="ember"]{
+  --accent-ink:#ffb43a; --mint-ink:#63d6a4;
   --bg:#16120c; --bg-glow:#241a10;
   --surface:#211a11; --surface-2:#2a2116; --surface-3:#332818;
   --line:rgba(255,214,150,.10); --line-strong:rgba(255,214,150,.20);
-  --ink:#f4ecdd; --ink-dim:#a99d86; --ink-faint:#6f6551;
+  --ink:#f4ecdd; --ink-dim:#a99d86; --ink-faint:#8B8373;
   --amber:#ffb43a; --amber-deep:#e08a1e; --amber-soft:rgba(255,180,58,.14);
   --mint:#63d6a4; --coral:#f2796b; --on-accent:#241905;
   --lift:0 1px 2px rgba(0,0,0,.4), 0 6px 18px -10px rgba(0,0,0,.7);
@@ -28,10 +29,11 @@ html[data-theme="ember"]{
 
 /* ---------- CLAY — soft, tactile, light ---------- */
 html[data-theme="clay"]{
+  --accent-ink:#A85C3C; --mint-ink:#2C7B58;
   --bg:#E3DFF4; --bg-glow:#FFE0B8;
   --surface:#F6F4FE; --surface-2:#ECE9F8; --surface-3:#E0DBF2;
   --line:rgba(120,105,175,.14); --line-strong:rgba(120,105,175,.26);
-  --ink:#3A3357; --ink-dim:#847CA6; --ink-faint:#B4AECF;
+  --ink:#3A3357; --ink-dim:#847CA6; --ink-faint:#6F6B80;
   --amber:#FF8C5B; --amber-deep:#E46B38; --amber-soft:rgba(255,140,91,.14);
   --mint:#48C88E; --coral:#F2616B; --on-accent:#4A1C06;
   /* Clay's depth comes from a light-source highlight plus a soft drop, not
@@ -42,6 +44,7 @@ html[data-theme="clay"]{
 
 /* ---------- AURORA — luminous, deep ---------- */
 html[data-theme="aurora"]{
+  --accent-ink:#9FF0FF; --mint-ink:#5FE0C0;
   --bg:#241852; --bg-glow:#7E3B7E;
   --surface:#31235C; --surface-2:#3B2B6C; --surface-3:#46337D;
   --line:rgba(255,255,255,.12); --line-strong:rgba(255,255,255,.22);
@@ -54,10 +57,11 @@ html[data-theme="aurora"]{
 
 /* ---------- NEON — arcade ---------- */
 html[data-theme="neon"]{
+  --accent-ink:#3EE7FF; --mint-ink:#C4FF4D;
   --bg:#0B0712; --bg-glow:#271738;
   --surface:#221A38; --surface-2:#191230; --surface-3:#2C2148;
   --line:rgba(120,90,200,.20); --line-strong:rgba(120,90,200,.38);
-  --ink:#EDE9FF; --ink-dim:#B79BD8; --ink-faint:#8478AE;
+  --ink:#EDE9FF; --ink-dim:#B79BD8; --ink-faint:#8B80B2;
   --amber:#3EE7FF; --amber-deep:#12A6D8; --amber-soft:rgba(62,231,255,.14);
   --mint:#C4FF4D; --coral:#FF4D7D; --on-accent:#06131A;
   --lift:0 6px 18px rgba(0,0,0,.5), inset 1px 1px 2px rgba(120,90,200,.2);
@@ -66,10 +70,11 @@ html[data-theme="neon"]{
 
 /* ---------- BOLD — flat and loud ---------- */
 html[data-theme="bold"]{
+  --accent-ink:#3B4EF0; --mint-ink:#1F8748;
   --bg:#EFEDE6; --bg-glow:#FFE9A8;
   --surface:#FFFFFF; --surface-2:#F7F5EF; --surface-3:#EAE7DC;
   --line:rgba(18,20,29,.14); --line-strong:rgba(18,20,29,.9);
-  --ink:#12141D; --ink-dim:#4A4D5C; --ink-faint:#8A8D9C;
+  --ink:#12141D; --ink-dim:#4A4D5C; --ink-faint:#737683;
   --amber:#3B4EF0; --amber-deep:#2536C4; --amber-soft:rgba(59,78,240,.12);
   --mint:#2FCE6E; --coral:#FF5E5B; --on-accent:#FFFFFF;
   /* No blur at all: Bold's depth is a hard offset block, the way a sticker
