@@ -170,9 +170,17 @@ https://raw.githack.com/<owner>/<repo>/<branch>/public/index.html
 Good enough to share a link; not a host to build a business on.
 
 **GitHub Pages** is wired in `.github/workflows/pages.yml` but needs the
-repository setting turned on once: *Settings → Pages → Source: GitHub
-Actions*. Every push then builds and deploys. Set the `API_ORIGIN` repository
-variable to point the deployed site at a real backend.
+repository setting turned on **once, by a repo admin**: *Settings → Pages →
+Source: GitHub Actions*. Every push then builds, deploys, and runs the live
+smoke test. Set the `API_ORIGIN` repository variable to point the deployed
+site at a real backend.
+
+This step cannot be automated with the default Actions token.
+`configure-pages` has an `enablement` input for it, and it is enabled here,
+but `GITHUB_TOKEN` gets *"Resource not accessible by integration"* — creating
+a Pages site needs repo-admin rights the Actions token does not carry, even
+with `pages: write`. Supplying a PAT with admin rights as its `token:` would
+work; clicking the setting once is simpler.
 
 ## Scripts
 

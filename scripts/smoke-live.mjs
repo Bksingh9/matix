@@ -26,9 +26,14 @@ const check = (ok, label, detail) => {
   if (!ok) failures.push(label);
 };
 
+/* Chromium does not read HTTPS_PROXY the way curl does, so on a network that
+   only reaches the internet through a proxy it fails with CONNECTION_RESET
+   while every other tool works. Pass it through explicitly when one is set. */
+const proxyUrl = process.env.HTTPS_PROXY || process.env.https_proxy || '';
 const browser = await chromium.launch({
   executablePath: process.env.PW_CHROMIUM || undefined,
-  args: ['--no-sandbox', '--disable-dev-shm-usage']
+  args: ['--no-sandbox', '--disable-dev-shm-usage'],
+  ...(proxyUrl ? { proxy: { server: proxyUrl } } : {})
 });
 const ctx = await browser.newContext({ viewport: { width: 420, height: 900 } });
 const page = await ctx.newPage();

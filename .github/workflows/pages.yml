@@ -41,10 +41,17 @@ jobs:
       - id: pages
         uses: actions/configure-pages@v5
         with:
-          # Create the Pages site if it does not exist yet, instead of failing
-          # and waiting for someone to click Settings -> Pages. The workflow
-          # already holds pages: write, which is exactly the permission that
-          # call needs.
+          # Tries to create the Pages site rather than failing when none
+          # exists. It does NOT work with the default GITHUB_TOKEN, which
+          # returns "Resource not accessible by integration": creating a Pages
+          # site needs repo-admin rights that the Actions token does not carry,
+          # even with pages: write.
+          #
+          # Left on because it costs nothing and starts working the moment a
+          # PAT with admin rights is supplied as `token:`. Until then the site
+          # has to be created once by hand:
+          #     Settings -> Pages -> Source: GitHub Actions
+          # Everything after that step already passes.
           enablement: true
 
       # No base path needed: every asset path in public/ is relative, so the
